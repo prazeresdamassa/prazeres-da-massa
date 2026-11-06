@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#39251d">
+<title>Cardápio | Prazeres da Massa</title>
+<style>
+:root{
+  --brown:#39251d;
+  --brown2:#52372b;
+  --cream:#fff8ed;
+  --gold:#e5ad42;
+  --red:#a83d2c;
+  --green:#218c55;
+  --muted:#796b60;
+  --border:#eadfce;
+  --bg-card:#fffdf9;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#f3ece2;
+  color:var(--brown);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  line-height:1.4;
+}
+.wrap{max-width:680px;margin:0 auto;padding:16px 12px 40px}
+
+/* Topo / Hero */
+.hero{
+  background:linear-gradient(135deg,#2e1e18,#5b3929);
+  color:var(--cream);
+  border-radius:22px;
+  padding:26px 18px;
+  text-align:center;
+  box-shadow:0 8px 24px rgba(57,37,29,0.18);
+}
+.logo-wrap{
+  max-width:135px;
+  margin:0 auto 12px;
+}
+.brand-logo{
+  width:100%;
+  height:auto;
+  border-radius:18px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.35);
+  display:block;
+}
+.logo-title{
+  font-family:Georgia,serif;
+  font-size:clamp(28px,7vw,42px);
+  font-weight:bold;
+  color:#f7d58c;
+  line-height:1.1;
+  margin:0;
+}
+.tag{margin:8px 0 0;color:#f9ead1;font-size:14px;letter-spacing:.3px}
+.pill{
+  display:inline-block;
+  margin-top:14px;
+  padding:6px 14px;
+  border-radius:99px;
+  background:#ffffff18;
+  border:1px solid #ffffff35;
+  color:#ffe5ad;
+  font-size:13px;
+  font-weight:500;
+}
+
+/* Seções */
+h2{font-size:18px;margin:0 0 13px}
+.section{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:17px;
+  padding:18px;
+  margin-top:14px;
+  box-shadow:0 3px 12px rgba(57,37,29,0.05);
+}
+
+/* Opções e Grids Responsivos */
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.options-3{grid-template-columns:repeat(3, 1fr)}
+.choice{display:block;position:relative}
+.choice input{position:absolute;opacity:0}
+.choice span{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  border:1.5px solid #e5d8c6;
+  border-radius:12px;
+  padding:12px 10px;
+  background:#fffaf2;
+  min-height:56px;
+  font-weight:650;
+  font-size:14px;
+  cursor:pointer;
+  transition:all .15s ease;
+  user-select:none;
+}
+.choice input:checked+span{
+  border-color:var(--red);
+  background:#fff0e9;
+  box-shadow:inset 0 0 0 1px var(--red);
+}
+.choice input:focus-visible+span{outline:3px solid #e5ad4280}
+.sub{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px}
+
+label.field{display:block;font-size:13.5px;font-weight:700;margin:14px 0 6px}
+input[type=text],textarea,select{
+  width:100%;
+  padding:12px;
+  border:1px solid #d9cbb9;
+  border-radius:10px;
+  background:#fff;
+  font:inherit;
+  color:var(--brown);
+}
+textarea{min-height:76px;resize:vertical}
+
+/* Seletor de Quantidade */
+.qty-selector{display:flex;align-items:center;gap:12px;margin-top:8px}
+.qty-btn{
+  background:#fffaf2;
+  border:1.5px solid #d9cbb9;
+  border-radius:10px;
+  width:42px;
+  height:42px;
+  font-size:20px;
+  font-weight:700;
+  color:var(--brown);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.qty-btn:active{background:#e5d8c6}
+.qty-num{font-size:18px;font-weight:750;min-width:30px;text-align:center}
+
+/* Botão Adicionar Panqueca */
+.btn-add{
+  width:100%;
+  margin-top:18px;
+  background:var(--brown);
+  color:var(--cream);
+  border:0;
+  border-radius:12px;
+  padding:15px;
+  font-size:15px;
+  font-weight:750;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  transition:background .2s;
+}
+.btn-add:hover{background:var(--brown2)}
+
+/* Itens no Pedido */
+.cart-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding:12px 14px;
+  background:#fffaf2;
+  border:1px solid #eadfce;
+  border-radius:12px;
+  gap:10px;
+}
+.cart-item-title{font-weight:750;font-size:14.5px;color:var(--brown)}
+.cart-item-details{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.btn-del{
+  background:none;
+  border:none;
+  color:var(--red);
+  cursor:pointer;
+  font-weight:650;
+  font-size:12.5px;
+  padding:4px 6px;
+  white-space:nowrap;
+}
+
+.empty-note{color:var(--muted);font-size:13px;text-align:center;padding:14px;font-style:italic}
+
+/* Preço Promocional */
+.pricebox{background:#fbf1df;border-radius:13px;padding:14px;margin-top:13px}
+.price-line{display:flex;justify-content:space-between;gap:12px;margin:5px 0;font-size:14px}
+.total{font-size:22px;font-weight:800;color:var(--brown)}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:9px 0 0}
+
+/* Botão Finalizar Pedido */
+button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:750;cursor:pointer}
+.send{
+  width:100%;
+  margin-top:16px;
+  background:var(--green);
+  color:white;
+  box-shadow:0 5px 13px rgba(33,140,85,0.28);
+  transition:filter .2s;
+}
+.send:hover{filter:brightness(.95)}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:24px 8px}
+.error{color:#a32620;font-size:13px;margin-top:8px;display:none;font-weight:600}
+
+/* Ajustes Mobile */
+@media(max-width:540px){
+  .options-3{grid-template-columns:1fr}
+  .options{grid-template-columns:1fr}
+  .section{padding:15px}
+  .logo-wrap{max-width:115px}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<!-- Cabeçalho com Logo -->
+<header class="hero">
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Prazeres da Massa" class="brand-logo" onerror="this.parentElement.style.display='none'">
+  </div>
+  <h1 class="logo-title">Prazeres da Massa</h1>
+  <p class="tag">Sabor caseiro em cada mordida!</p>
+  <div class="pill">🥞 Panquecas artesanais • Feitas com carinho</div>
+</header>
+
+<!-- 1. Montagem da Panqueca -->
+<section class="section">
+  <h2>1. Monte sua panqueca</h2>
+  
+  <!-- A. Recheio -->
+  <label class="field" style="margin-top:0">Escolha o recheio:</label>
+  <div class="options">
+    <label class="choice">
+      <input type="radio" name="recheio" value="Frango Cremoso" checked>
+      <span>🍗 Frango Cremoso<small class="sub">Frango desfiado e tempero especial</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="recheio" value="Carne Moída Especial">
+      <span>🥩 Carne Moída Especial<small class="sub">Carne refogada com temperos aromáticos</small></span>
+    </label>
+  </div>
+
+  <!-- B. Massa -->
+  <label class="field">Escolha o tipo de massa:</label>
+  <div class="options options-3">
+    <label class="choice">
+      <input type="radio" name="massa" value="Tradicional" checked>
+      <span>Tradicional<small class="sub">Massa leve e dourada</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="massa" value="Verde (couve-folha)">
+      <span>🌿 Verde<small class="sub">Com couve-folha</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="massa" value="Vermelha (beterraba)">
+      <span>❤️ Vermelha<small class="sub">Com beterraba</small></span>
+    </label>
+  </div>
+
+  <!-- C. Molho -->
+  <label class="field">Escolha o tipo de molho:</label>
+  <div class="options options-3">
+    <label class="choice">
+      <input type="radio" name="molho" value="Sem molho">
+      <span>Sem molho</span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="molho" value="Molho de tomate especial" checked>
+      <span>🥫 Tomate Especial<small class="sub">Artesanal e temperado</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="molho" value="Molho de batata especial">
+      <span>🥔 Batata Especial<small class="sub">Cremoso e aveludado</small></span>
+    </label>
+  </div>
+
+  <!-- D. Adicionais -->
+  <label class="field">Escolha os adicionais:</label>
+  <div class="options options-3">
+    <label class="choice">
+      <input type="checkbox" name="adicional" value="Sem adicional" id="add-nenhum" checked onchange="toggleAdicional(this)">
+      <span>Sem adicional</span>
+    </label>
+    <label class="choice">
+      <input type="checkbox" name="adicional" value="Orégano" class="add-item" onchange="toggleAdicional(this)">
+      <span>🌿 Orégano</span>
+    </label>
+    <label class="choice">
+      <input type="checkbox" name="adicional" value="Queijo Mussarela" class="add-item" onchange="toggleAdicional(this)">
+      <span>🧀 Queijo Mussarela</span>
+    </label>
+  </div>
+
+  <!-- E. Quantidade desta combinação -->
+  <label class="field">Quantidade desta combinação:</label>
+  <div class="qty-selector">
+    <button type="button" class="qty-btn" onclick="adjustItemQty(-1)">−</button>
+    <span class="qty-num" id="tempQty">1</span>
+    <button type="button" class="qty-btn" onclick="adjustItemQty(1)">+</button>
+  </div>
+
+  <button type="button" class="btn-add" id="btnAdd">
+    ➕ Adicionar esta panqueca ao pedido
+  </button>
+</section>
+
+<!-- 2. Resumo do Pedido -->
+<section class="section">
+  <h2>2. Panquecas no seu pedido</h2>
+  
+  <div id="cartList" class="cart-list">
+    <div class="empty-note">Nenhuma panqueca adicionada ainda.<br>Monte sua panqueca acima e clique em "Adicionar esta panqueca".</div>
+  </div>
+
+  <div class="pricebox" aria-live="polite">
+    <div class="price-line"><span>Preço promocional</span><strong>2 por R$ 21,99</strong></div>
+    <div class="price-line"><span>Unidade avulsa</span><strong>R$ 12,99</strong></div>
+    <div class="price-line total"><span>Total</span><span id="total">R$ 0,00</span></div>
+    <p class="note" id="priceNote">Adicione panquecas para calcular o valor.</p>
+  </div>
+</section>
+
+<!-- 3. Dados do Cliente -->
+<section class="section">
+  <h2>3. Dados para entrega</h2>
+  <label class="field" for="nome">Seu nome *</label>
+  <input id="nome" type="text" autocomplete="name" placeholder="Como podemos chamar você?">
+  <label class="field" for="endereco">Endereço completo *</label>
+  <input id="endereco" type="text" autocomplete="street-address" placeholder="Rua, número, bairro">
+  <label class="field" for="referencia">Ponto de referência</label>
+  <input id="referencia" type="text" placeholder="Ex.: próximo à praça, portão azul">
+  <label class="field" for="obs">Observações (opcional)</label>
+  <textarea id="obs" placeholder="Alguma informação adicional sobre o preparo ou entrega?"></textarea>
+  <p class="note">🛵 Entrega grátis em Chapadinha–MA, conforme área de atendimento. A equipe confirmará seu pedido e o prazo pelo WhatsApp.</p>
+  <div id="error" class="error"></div>
+  <button class="send" id="send">Finalizar Pedido</button>
+</section>
+
+<footer class="footer">Prazeres da Massa ❤️<br>Obrigado por escolher nosso sabor caseiro!</footer>
+</main>
+
+<script>
+const money = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const WHATSAPP_NUM = "5598981997360";
+
+let cart = [];
+let tempQty = 1;
+
+// Ajuste da quantidade da montagem atual
+function adjustItemQty(delta){
+  tempQty = Math.max(1, Math.min(99, tempQty + delta));
+  document.getElementById('tempQty').textContent = tempQty;
+}
+
+// Lógica de seleção dos adicionais
+function toggleAdicional(el) {
+  const nenhumCheck = document.getElementById('add-nenhum');
+  const items = document.querySelectorAll('.add-item');
+
+  if (el.id === 'add-nenhum') {
+    if (el.checked) {
+      items.forEach(cb => cb.checked = false);
+    } else {
+      el.checked = true;
+    }
+  } else {
+    if (el.checked) {
+      nenhumCheck.checked = false;
+    } else {
+      const anyChecked = Array.from(items).some(cb => cb.checked);
+      if (!anyChecked) {
+        nenhumCheck.checked = true;
+      }
+    }
+  }
+}
+
+// Adicionar panqueca ao pedido
+document.getElementById('btnAdd').addEventListener('click', () => {
+  const recheio = document.querySelector('input[name="recheio"]:checked').value;
+  const massa = document.querySelector('input[name="massa"]:checked').value;
+  const molho = document.querySelector('input[name="molho"]:checked').value;
+
+  const adicionaisEls = Array.from(document.querySelectorAll('input[name="adicional"]:checked'));
+  const adicionais = adicionaisEls.map(cb => cb.value);
+
+  // Verifica se existe uma panqueca idêntica para agrupar
+  const adicionaisKey = [...adicionais].sort().join('|');
+  const existing = cart.find(item => 
+    item.recheio === recheio && 
+    item.massa === massa && 
+    item.molho === molho &&
+    [...item.adicionais].sort().join('|') === adicionaisKey
+  );
+
+  if (existing) {
+    existing.qty += tempQty;
+  } else {
+    cart.push({ recheio, massa, molho, adicionais, qty: tempQty });
+  }
+
+  // Reseta quantidade
+  tempQty = 1;
+  document.getElementById('tempQty').textContent = tempQty;
+
+  renderCart();
+});
+
+function removeItem(index) {
+  cart.splice(index, 1);
+  renderCart();
+}
+
+function renderCart() {
+  const listEl = document.getElementById('cartList');
+  const totalEl = document.getElementById('total');
+  const noteEl = document.getElementById('priceNote');
+
+  if (cart.length === 0) {
+    listEl.innerHTML = `<div class="empty-note">Nenhuma panqueca adicionada ainda.<br>Monte sua panqueca acima e clique em "Adicionar esta panqueca".</div>`;
+    totalEl.textContent = money(0);
+    noteEl.textContent = "Adicione panquecas para calcular o valor.";
+    return;
+  }
+
+  listEl.innerHTML = "";
+  let totalCount = 0;
+
+  cart.forEach((item, index) => {
+    totalCount += item.qty;
+    const itemEl = document.createElement('div');
+    itemEl.className = 'cart-item';
+    itemEl.innerHTML = `
+      <div>
+        <div class="cart-item-title">${item.qty}× ${item.recheio}</div>
+        <div class="cart-item-details">
+          • Massa: <strong>${item.massa}</strong><br>
+          • Molho: <strong>${item.molho}</strong><br>
+          • Adicionais: <strong>${item.adicionais.join(', ')}</strong>
+        </div>
+      </div>
+      <button type="button" class="btn-del" onclick="removeItem(${index})">Remover</button>
+    `;
+    listEl.appendChild(itemEl);
+  });
+
+  // Cálculo: 2 por R$ 21,99 e ímpares somam R$ 12,99
+  const pairs = Math.floor(totalCount / 2);
+  const singles = totalCount % 2;
+  const total = (pairs * 21.99) + (singles * 12.99);
+
+  totalEl.textContent = money(total);
+
+  let details = [];
+  if (pairs) details.push(`${pairs} par(es) × R$ 21,99`);
+  if (singles) details.push(`${singles} unidade(s) × R$ 12,99`);
+  noteEl.textContent = `${totalCount} panqueca(s) no total: ${details.join(' + ')}.`;
+}
+
+// Disparo WhatsApp
+document.getElementById('send').addEventListener('click', () => {
+  const err = document.getElementById('error');
+
+  if (cart.length === 0) {
+    err.textContent = "Adicione pelo menos 1 panqueca ao pedido antes de finalizar.";
+    err.style.display = 'block';
+    return;
+  }
+
+  const nome = document.getElementById('nome').value.trim();
+  const endereco = document.getElementById('endereco').value.trim();
+
+  if (!nome || !endereco) {
+    err.textContent = "Preencha seu nome e endereço completo para continuar.";
+    err.style.display = 'block';
+    (!nome ? document.getElementById('nome') : document.getElementById('endereco')).focus();
+    return;
+  }
+
+  err.style.display = 'none';
+
+  let totalCount = 0;
+  cart.forEach(i => totalCount += i.qty);
+  const pairs = Math.floor(totalCount / 2);
+  const singles = totalCount % 2;
+  const total = (pairs * 21.99) + (singles * 12.99);
+
+  const referencia = document.getElementById('referencia').value.trim();
+  const obs = document.getElementById('obs').value.trim();
+
+  // Mensagem formatada
+  let msg = `🥞 *NOVO PEDIDO — PRAZERES DA MASSA* ❤️\n\n`;
+  msg += `*Nome:* ${nome}\n`;
+  msg += `*Endereço:* ${endereco}\n`;
+  if (referencia) msg += `*Referência:* ${referencia}\n`;
+  if (obs) msg += `*Observações:* ${obs}\n`;
+
+  msg += `\n*PANQUECAS DO PEDIDO:*\n`;
+  cart.forEach((item) => {
+    msg += `\n*${item.qty}x ${item.recheio}*\n`;
+    msg += `  • Massa: ${item.massa}\n`;
+    msg += `  • Molho: ${item.molho}\n`;
+    msg += `  • Adicionais: ${item.adicionais.join(', ')}\n`;
+  });
+
+  msg += `\n------------------------------\n`;
+  msg += `*Total de Panquecas:* ${totalCount} unidade(s)\n`;
+  msg += `*Valor Total:* ${money(total)}\n`;
+  msg += `*Entrega:* Grátis (Chapadinha–MA)\n`;
+  msg += `------------------------------\n\n`;
+
+  // Dados do PIX logo após o valor total
+  msg += `*Chave PIX para pagamento (celular):*\n`;
+  msg += `98982878794\n`;
+  msg += `Romilly Sousa Prazeres\n`;
+  msg += `Mercado Pago\n\n`;
+  msg += `*OBS:* Enviar comprovante para este contato.\n\n`;
+  msg += `Por favor, confirmar o pedido e o prazo de entrega! ❤️`;
+
+  const url = `https://wa.me/${WHATSAPP_NUM}?text=` + encodeURIComponent(msg);
+  window.open(url, '_blank', 'noopener');
+});
+</script>
+</body>
+</html>
