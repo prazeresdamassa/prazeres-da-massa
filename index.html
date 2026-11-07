@@ -25,14 +25,78 @@ body{
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   line-height:1.4;
 }
-.wrap{max-width:680px;margin:0 auto;padding:16px 12px 40px}
+.wrap{max-width:680px;margin:0 auto;padding:12px 12px 40px}
+
+/* Barra Superior de Status (Data, Hora e Pedido Sequencial) */
+.top-status-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#fffdf9;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px 14px;
+  margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(57,37,29,0.04);
+  font-size:12.5px;
+  color:var(--brown);
+}
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-weight:700;
+  color:var(--green);
+  font-size:12px;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+}
+.status-dot{
+  width:9px;
+  height:9px;
+  background:var(--green);
+  border-radius:50%;
+  box-shadow:0 0 0 3px rgba(33,140,85,0.22);
+  animation:pulseDot 2s infinite ease-in-out;
+}
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(33,140,85,0.45)}
+  70%{box-shadow:0 0 0 7px rgba(33,140,85,0)}
+  100%{box-shadow:0 0 0 0 rgba(33,140,85,0)}
+}
+.status-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.status-datetime{
+  color:var(--muted);
+  font-weight:550;
+}
+.status-order-tag{
+  background:#f6ece0;
+  color:var(--brown);
+  border:1px solid #e2d2be;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+}
+.status-order-tag strong{
+  color:var(--red);
+  font-size:13.5px;
+  font-weight:800;
+}
 
 /* Topo / Hero */
 .hero{
   background:linear-gradient(135deg,#2e1e18,#5b3929);
   color:var(--cream);
   border-radius:22px;
-  padding:26px 18px;
+  padding:24px 18px;
   text-align:center;
   box-shadow:0 8px 24px rgba(57,37,29,0.18);
 }
@@ -69,7 +133,13 @@ body{
 }
 
 /* Seções */
-h2{font-size:18px;margin:0 0 13px}
+h2{
+  font-size:18px;
+  margin:0 0 13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
 .section{
   background:var(--bg-card);
   border:1px solid var(--border);
@@ -77,6 +147,16 @@ h2{font-size:18px;margin:0 0 13px}
   padding:18px;
   margin-top:14px;
   box-shadow:0 3px 12px rgba(57,37,29,0.05);
+}
+
+.order-badge-title{
+  font-size:12px;
+  background:#f6ece0;
+  color:var(--red);
+  padding:3px 9px;
+  border-radius:8px;
+  border:1px solid #e2d2be;
+  font-weight:800;
 }
 
 /* Opções e Grids Responsivos */
@@ -207,6 +287,14 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 
 /* Ajustes Mobile */
 @media(max-width:540px){
+  .top-status-bar{
+    flex-direction:row;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:space-between;
+    padding:8px 10px;
+  }
+  .status-info{gap:6px}
   .options-3{grid-template-columns:1fr}
   .options{grid-template-columns:1fr}
   .section{padding:15px}
@@ -216,6 +304,22 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 </head>
 <body>
 <main class="wrap">
+
+<!-- Barra Superior de Status Profissional -->
+<div class="top-status-bar">
+  <div class="status-badge">
+    <span class="status-dot"></span>
+    <span>Aberto</span>
+  </div>
+  <div class="status-info">
+    <div class="status-datetime">
+      📅 <span id="liveDate">--/--/----</span> • <span id="liveTime">--:--</span>
+    </div>
+    <div class="status-order-tag">
+      Pedido <strong id="orderNumberDisplay">#001</strong>
+    </div>
+  </div>
+</div>
 
 <!-- Cabeçalho com Logo -->
 <header class="hero">
@@ -310,7 +414,10 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 
 <!-- 2. Resumo do Pedido -->
 <section class="section">
-  <h2>2. Panquecas no seu pedido</h2>
+  <h2>
+    <span>2. Panquecas no seu pedido</span>
+    <span class="order-badge-title" id="orderTitleBadge">Pedido #001</span>
+  </h2>
   
   <div id="cartList" class="cart-list">
     <div class="empty-note">Nenhuma panqueca adicionada ainda.<br>Monte sua panqueca acima e clique em "Adicionar esta panqueca".</div>
@@ -350,6 +457,75 @@ const WHATSAPP_NUM = "5598981997360";
 let cart = [];
 let tempQty = 1;
 
+// --- Gestão de Data, Hora e Contador Diário de Pedidos ---
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Obtém o número do pedido garantindo que zere a cada novo dia
+function getDailyOrderNumber() {
+  const today = getTodayString();
+  const savedDate = localStorage.getItem('pdm_order_date');
+  let count = parseInt(localStorage.getItem('pdm_order_count') || '1', 10);
+
+  if (savedDate !== today || isNaN(count) || count < 1) {
+    count = 1;
+    localStorage.setItem('pdm_order_date', today);
+    localStorage.setItem('pdm_order_count', '1');
+  }
+  return count;
+}
+
+// Atualiza o display visual do pedido na página
+function updateOrderDisplay() {
+  const current = getDailyOrderNumber();
+  const formatted = '#' + String(current).padStart(3, '0');
+  
+  const elDisplay = document.getElementById('orderNumberDisplay');
+  const elTitle = document.getElementById('orderTitleBadge');
+  
+  if (elDisplay) elDisplay.textContent = formatted;
+  if (elTitle) elTitle.textContent = `Pedido ${formatted}`;
+}
+
+// Incrementa o pedido e salva para a próxima solicitação
+function commitOrderNumber() {
+  const current = getDailyOrderNumber();
+  const next = current + 1;
+  localStorage.setItem('pdm_order_date', getTodayString());
+  localStorage.setItem('pdm_order_count', next.toString());
+  updateOrderDisplay();
+  return current;
+}
+
+// Atualiza o relógio e a data
+function updateClock() {
+  const now = new Date();
+  const dateFormatted = now.toLocaleDateString('pt-BR');
+  const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  const elDate = document.getElementById('liveDate');
+  const elTime = document.getElementById('liveTime');
+  
+  if (elDate) elDate.textContent = dateFormatted;
+  if (elTime) elTime.textContent = timeFormatted;
+
+  // Se a página ficar aberta durante a meia-noite, reseta a contagem
+  const today = getTodayString();
+  if (localStorage.getItem('pdm_order_date') && localStorage.getItem('pdm_order_date') !== today) {
+    updateOrderDisplay();
+  }
+}
+
+// Inicialização imediata
+updateClock();
+updateOrderDisplay();
+setInterval(updateClock, 1000); // Atualiza com precisão a cada segundo
+
 // Ajuste da quantidade da montagem atual
 function adjustItemQty(delta){
   tempQty = Math.max(1, Math.min(99, tempQty + delta));
@@ -388,7 +564,6 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   const adicionaisEls = Array.from(document.querySelectorAll('input[name="adicional"]:checked'));
   const adicionais = adicionaisEls.map(cb => cb.value);
 
-  // Verifica se existe uma panqueca idêntica para agrupar
   const adicionaisKey = [...adicionais].sort().join('|');
   const existing = cart.find(item => 
     item.recheio === recheio && 
@@ -403,7 +578,6 @@ document.getElementById('btnAdd').addEventListener('click', () => {
     cart.push({ recheio, massa, molho, adicionais, qty: tempQty });
   }
 
-  // Reseta quantidade
   tempQty = 1;
   document.getElementById('tempQty').textContent = tempQty;
 
@@ -448,7 +622,6 @@ function renderCart() {
     listEl.appendChild(itemEl);
   });
 
-  // Cálculo: 2 por R$ 21,99 e ímpares somam R$ 12,99
   const pairs = Math.floor(totalCount / 2);
   const singles = totalCount % 2;
   const total = (pairs * 21.99) + (singles * 12.99);
@@ -483,6 +656,15 @@ document.getElementById('send').addEventListener('click', () => {
 
   err.style.display = 'none';
 
+  // Obter e incrementar o número sequencial do pedido
+  const orderNumber = commitOrderNumber();
+  const orderFormatted = '#' + String(orderNumber).padStart(3, '0');
+
+  // Capturar data e hora exatas do envio
+  const now = new Date();
+  const dateFormatted = now.toLocaleDateString('pt-BR');
+  const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
   let totalCount = 0;
   cart.forEach(i => totalCount += i.qty);
   const pairs = Math.floor(totalCount / 2);
@@ -493,13 +675,18 @@ document.getElementById('send').addEventListener('click', () => {
   const obs = document.getElementById('obs').value.trim();
 
   // Mensagem formatada
-  let msg = `🥞 *NOVO PEDIDO — PRAZERES DA MASSA* ❤️\n\n`;
-  msg += `*Nome:* ${nome}\n`;
-  msg += `*Endereço:* ${endereco}\n`;
-  if (referencia) msg += `*Referência:* ${referencia}\n`;
-  if (obs) msg += `*Observações:* ${obs}\n`;
+  let msg = `🥞 *NOVO PEDIDO — PRAZERES DA MASSA* ❤️\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `🧾 *Pedido:* ${orderFormatted}\n`;
+  msg += `📅 *Data/Hora:* ${dateFormatted} às ${timeFormatted}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  msg += `\n*PANQUECAS DO PEDIDO:*\n`;
+  msg += `👤 *Nome:* ${nome}\n`;
+  msg += `📍 *Endereço:* ${endereco}\n`;
+  if (referencia) msg += `🗺️ *Referência:* ${referencia}\n`;
+  if (obs) msg += `📝 *Observações:* ${obs}\n`;
+
+  msg += `\n🥞 *PANQUECAS DO PEDIDO:*\n`;
   cart.forEach((item) => {
     msg += `\n*${item.qty}x ${item.recheio}*\n`;
     msg += `  • Massa: ${item.massa}\n`;
@@ -507,18 +694,18 @@ document.getElementById('send').addEventListener('click', () => {
     msg += `  • Adicionais: ${item.adicionais.join(', ')}\n`;
   });
 
-  msg += `\n------------------------------\n`;
-  msg += `*Total de Panquecas:* ${totalCount} unidade(s)\n`;
-  msg += `*Valor Total:* ${money(total)}\n`;
-  msg += `*Entrega:* Grátis (Chapadinha–MA)\n`;
-  msg += `------------------------------\n\n`;
+  msg += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📦 *Total de Panquecas:* ${totalCount} unidade(s)\n`;
+  msg += `💰 *Valor Total:* ${money(total)}\n`;
+  msg += `🛵 *Entrega:* Grátis (Chapadinha–MA)\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  // Dados do PIX logo após o valor total
-  msg += `*Chave PIX para pagamento (celular):*\n`;
+  // Dados do PIX
+  msg += `💳 *Chave PIX para pagamento (celular):*\n`;
   msg += `98982878794\n`;
   msg += `Romilly Sousa Prazeres\n`;
   msg += `Mercado Pago\n\n`;
-  msg += `*OBS:* Enviar comprovante para este contato.\n\n`;
+  msg += `⚠️ *OBS:* Enviar comprovante para este contato.\n\n`;
   msg += `Obrigado pelo seu pedido e preferência!`;
 
   const url = `https://wa.me/${WHATSAPP_NUM}?text=` + encodeURIComponent(msg);
