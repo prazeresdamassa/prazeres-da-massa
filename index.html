@@ -27,7 +27,7 @@ body{
 }
 .wrap{max-width:680px;margin:0 auto;padding:12px 12px 40px}
 
-/* Barra Superior de Status (Data, Hora e Pedido Sequencial) */
+/* Barra Superior de Status */
 .top-status-bar{
   display:flex;
   align-items:center;
@@ -159,7 +159,7 @@ h2{
   font-weight:800;
 }
 
-/* Opções e Grids Responsivos */
+/* Opções e Grids */
 .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .options-3{grid-template-columns:repeat(3, 1fr)}
 .choice{display:block;position:relative}
@@ -199,7 +199,7 @@ input[type=text],textarea,select{
 }
 textarea{min-height:76px;resize:vertical}
 
-/* Seletor de Quantidade */
+/* Seletores de Quantidade */
 .qty-selector{display:flex;align-items:center;gap:12px;margin-top:8px}
 .qty-btn{
   background:#fffaf2;
@@ -208,7 +208,7 @@ textarea{min-height:76px;resize:vertical}
   width:42px;
   height:42px;
   font-size:20px;
-  font-weight:700;
+  font-weight:750;
   color:var(--brown);
   cursor:pointer;
   display:flex;
@@ -217,6 +217,20 @@ textarea{min-height:76px;resize:vertical}
 }
 .qty-btn:active{background:#e5d8c6}
 .qty-num{font-size:18px;font-weight:750;min-width:30px;text-align:center}
+
+/* Bebidas */
+.drink-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#fffaf2;
+  border:1.5px solid #e5d8c6;
+  border-radius:12px;
+  padding:10px 14px;
+  margin-bottom:10px;
+}
+.drink-info{font-size:14px;font-weight:650}
+.drink-price{font-size:12.5px;color:var(--muted);font-weight:normal}
 
 /* Botão Adicionar Panqueca */
 .btn-add{
@@ -265,13 +279,13 @@ textarea{min-height:76px;resize:vertical}
 
 .empty-note{color:var(--muted);font-size:13px;text-align:center;padding:14px;font-style:italic}
 
-/* Preço Promocional */
+/* Preço */
 .pricebox{background:#fbf1df;border-radius:13px;padding:14px;margin-top:13px}
 .price-line{display:flex;justify-content:space-between;gap:12px;margin:5px 0;font-size:14px}
 .total{font-size:22px;font-weight:800;color:var(--brown)}
 .note{font-size:12px;color:var(--muted);line-height:1.45;margin:9px 0 0}
 
-/* Botão Finalizar Pedido */
+/* Botão Finalizar */
 button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:750;cursor:pointer}
 .send{
   width:100%;
@@ -285,15 +299,8 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 .footer{text-align:center;color:var(--muted);font-size:12px;padding:24px 8px}
 .error{color:#a32620;font-size:13px;margin-top:8px;display:none;font-weight:600}
 
-/* Ajustes Mobile */
 @media(max-width:540px){
-  .top-status-bar{
-    flex-direction:row;
-    flex-wrap:wrap;
-    gap:8px;
-    justify-content:space-between;
-    padding:8px 10px;
-  }
+  .top-status-bar{flex-direction:row;flex-wrap:wrap;gap:8px;justify-content:space-between;padding:8px 10px}
   .status-info{gap:6px}
   .options-3{grid-template-columns:1fr}
   .options{grid-template-columns:1fr}
@@ -305,7 +312,7 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 <body>
 <main class="wrap">
 
-<!-- Barra Superior de Status Profissional -->
+<!-- Barra Superior de Status -->
 <div class="top-status-bar">
   <div class="status-badge">
     <span class="status-dot"></span>
@@ -316,12 +323,12 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
       📅 <span id="liveDate">--/--/----</span> • <span id="liveTime">--:--</span>
     </div>
     <div class="status-order-tag">
-      Pedido <strong id="orderNumberDisplay">#001</strong>
+      Pedido <strong id="orderNumberDisplay">#Carregando...</strong>
     </div>
   </div>
 </div>
 
-<!-- Cabeçalho com Logo -->
+<!-- Topo / Hero -->
 <header class="hero">
   <div class="logo-wrap">
     <img src="logo.png" alt="Prazeres da Massa" class="brand-logo" onerror="this.parentElement.style.display='none'">
@@ -335,7 +342,6 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
 <section class="section">
   <h2>1. Monte sua panqueca</h2>
   
-  <!-- A. Recheio -->
   <label class="field" style="margin-top:0">Escolha o recheio:</label>
   <div class="options">
     <label class="choice">
@@ -348,7 +354,6 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
     </label>
   </div>
 
-  <!-- B. Massa -->
   <label class="field">Escolha o tipo de massa:</label>
   <div class="options options-3">
     <label class="choice">
@@ -365,7 +370,6 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
     </label>
   </div>
 
-  <!-- C. Molho -->
   <label class="field">Escolha o tipo de molho:</label>
   <div class="options options-3">
     <label class="choice">
@@ -382,8 +386,7 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
     </label>
   </div>
 
-  <!-- D. Adicionais -->
-  <label class="field">Escolha os adicionais:</label>
+  <label class="field">Escolha os adicionais: <span style="color:var(--green);font-weight:800;">(Grátis)</span></label>
   <div class="options options-3">
     <label class="choice">
       <input type="checkbox" name="adicional" value="Sem adicional" id="add-nenhum" checked onchange="toggleAdicional(this)">
@@ -399,7 +402,6 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
     </label>
   </div>
 
-  <!-- E. Quantidade desta combinação -->
   <label class="field">Quantidade desta combinação:</label>
   <div class="qty-selector">
     <button type="button" class="qty-btn" onclick="adjustItemQty(-1)">−</button>
@@ -412,11 +414,39 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
   </button>
 </section>
 
-<!-- 2. Resumo do Pedido -->
+<!-- 2. Bebidas / Refrigerantes -->
+<section class="section">
+  <h2>2. Bebidas geladas</h2>
+  <div class="drink-row">
+    <div class="drink-info">
+      🥤 Coca-Cola (Tradicional)
+      <div class="drink-price">R$ 6,00</div>
+    </div>
+    <div class="qty-selector" style="margin-top:0">
+      <button type="button" class="qty-btn" onclick="adjustDrinkQty('cocaTrad', -1)">−</button>
+      <span class="qty-num" id="qtyCocaTrad">0</span>
+      <button type="button" class="qty-btn" onclick="adjustDrinkQty('cocaTrad', 1)">+</button>
+    </div>
+  </div>
+
+  <div class="drink-row">
+    <div class="drink-info">
+      🥤 Coca-Cola (Zero)
+      <div class="drink-price">R$ 6,99</div>
+    </div>
+    <div class="qty-selector" style="margin-top:0">
+      <button type="button" class="qty-btn" onclick="adjustDrinkQty('cocaZero', -1)">−</button>
+      <span class="qty-num" id="qtyCocaZero">0</span>
+      <button type="button" class="qty-btn" onclick="adjustDrinkQty('cocaZero', 1)">+</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Resumo do Pedido -->
 <section class="section">
   <h2>
-    <span>2. Panquecas no seu pedido</span>
-    <span class="order-badge-title" id="orderTitleBadge">Pedido #001</span>
+    <span>3. Resumo do seu pedido</span>
+    <span class="order-badge-title" id="orderTitleBadge">Pedido #---</span>
   </h2>
   
   <div id="cartList" class="cart-list">
@@ -424,25 +454,40 @@ button{border:0;border-radius:13px;padding:15px 18px;font-size:16px;font-weight:
   </div>
 
   <div class="pricebox" aria-live="polite">
-    <div class="price-line"><span>Preço promocional</span><strong>2 por R$ 21,99</strong></div>
-    <div class="price-line"><span>Unidade avulsa</span><strong>R$ 12,99</strong></div>
+    <div class="price-line"><span>Promoção Panquecas</span><strong>2 por R$ 21,99</strong></div>
+    <div class="price-line"><span>Panqueca Avulsa</span><strong>R$ 12,99</strong></div>
     <div class="price-line total"><span>Total</span><span id="total">R$ 0,00</span></div>
-    <p class="note" id="priceNote">Adicione panquecas para calcular o valor.</p>
+    <p class="note" id="priceNote">Adicione itens para calcular o valor.</p>
   </div>
 </section>
 
-<!-- 3. Dados do Cliente -->
+<!-- 4. Dados e Pagamento -->
 <section class="section">
-  <h2>3. Dados para entrega</h2>
+  <h2>4. Dados para entrega e pagamento</h2>
   <label class="field" for="nome">Seu nome *</label>
   <input id="nome" type="text" autocomplete="name" placeholder="Como podemos chamar você?">
+  
   <label class="field" for="endereco">Endereço completo *</label>
   <input id="endereco" type="text" autocomplete="street-address" placeholder="Rua, número, bairro">
+  
   <label class="field" for="referencia">Ponto de referência</label>
   <input id="referencia" type="text" placeholder="Ex.: próximo à praça, portão azul">
+
+  <label class="field">Forma de pagamento *</label>
+  <div class="options">
+    <label class="choice">
+      <input type="radio" name="pagamento" value="Pix" checked>
+      <span>📱 Pix<small class="sub">Chave para transferência imediata</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="pagamento" value="Cartão (Crédito / Débito - Aproximação)">
+      <span>💳 Cartão<small class="sub">Crédito / Débito (Aproximação)</small></span>
+    </label>
+  </div>
+
   <label class="field" for="obs">Observações (opcional)</label>
   <textarea id="obs" placeholder="Alguma informação adicional sobre o preparo ou entrega?"></textarea>
-  <p class="note">🛵 Entrega grátis em Chapadinha–MA, conforme área de atendimento. A equipe confirmará seu pedido e o prazo pelo WhatsApp.</p>
+  <p class="note">🛵 Entrega grátis em Chapadinha–MA, conforme área de atendimento. A equipe confirmará seu pedido pelo WhatsApp.</p>
   <div id="error" class="error"></div>
   <button class="send" id="send">Finalizar Pedido</button>
 </section>
@@ -456,83 +501,90 @@ const WHATSAPP_NUM = "5598981997360";
 
 let cart = [];
 let tempQty = 1;
+let drinks = {
+  cocaTrad: { name: "Coca-Cola (Tradicional)", price: 6.00, qty: 0 },
+  cocaZero: { name: "Coca-Cola (Zero)", price: 6.99, qty: 0 }
+};
 
-// --- Gestão de Data, Hora e Contador Diário de Pedidos ---
+// --- Gestor Geral / Global de Pedidos ---
 function getTodayString() {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${year}${month}${day}`;
 }
 
-// Obtém o número do pedido garantindo que zere a cada novo dia
-function getDailyOrderNumber() {
-  const today = getTodayString();
-  const savedDate = localStorage.getItem('pdm_order_date');
-  let count = parseInt(localStorage.getItem('pdm_order_count') || '1', 10);
+let cachedOrderNumber = 1;
 
-  if (savedDate !== today || isNaN(count) || count < 1) {
-    count = 1;
-    localStorage.setItem('pdm_order_date', today);
-    localStorage.setItem('pdm_order_count', '1');
+async function fetchCurrentGlobalOrder() {
+  const dayKey = getTodayString();
+  try {
+    const res = await fetch(`https://api.counterapi.dev/v1/prazeresdamassa/pedidos_${dayKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      cachedOrderNumber = (data.count || 0) + 1;
+    } else if (res.status === 404) {
+      cachedOrderNumber = 1;
+    }
+  } catch(e) {
+    const local = parseInt(localStorage.getItem('pdm_fallback_' + dayKey) || '1', 10);
+    cachedOrderNumber = local;
   }
-  return count;
+  updateOrderDisplay(cachedOrderNumber);
 }
 
-// Atualiza o display visual do pedido na página
-function updateOrderDisplay() {
-  const current = getDailyOrderNumber();
-  const formatted = '#' + String(current).padStart(3, '0');
-  
+async function commitGlobalOrder() {
+  const dayKey = getTodayString();
+  let finalNum = cachedOrderNumber;
+  try {
+    const res = await fetch(`https://api.counterapi.dev/v1/prazeresdamassa/pedidos_${dayKey}/up`);
+    if (res.ok) {
+      const data = await res.json();
+      finalNum = data.count;
+    } else {
+      finalNum = cachedOrderNumber;
+      localStorage.setItem('pdm_fallback_' + dayKey, (finalNum + 1).toString());
+    }
+  } catch(e) {
+    finalNum = cachedOrderNumber;
+    localStorage.setItem('pdm_fallback_' + dayKey, (finalNum + 1).toString());
+  }
+  return finalNum;
+}
+
+function updateOrderDisplay(num) {
+  const formatted = '#' + String(num).padStart(3, '0');
   const elDisplay = document.getElementById('orderNumberDisplay');
   const elTitle = document.getElementById('orderTitleBadge');
-  
   if (elDisplay) elDisplay.textContent = formatted;
   if (elTitle) elTitle.textContent = `Pedido ${formatted}`;
 }
 
-// Incrementa o pedido e salva para a próxima solicitação
-function commitOrderNumber() {
-  const current = getDailyOrderNumber();
-  const next = current + 1;
-  localStorage.setItem('pdm_order_date', getTodayString());
-  localStorage.setItem('pdm_order_count', next.toString());
-  updateOrderDisplay();
-  return current;
-}
-
-// Atualiza o relógio e a data
 function updateClock() {
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString('pt-BR');
-  const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  
   const elDate = document.getElementById('liveDate');
   const elTime = document.getElementById('liveTime');
-  
-  if (elDate) elDate.textContent = dateFormatted;
-  if (elTime) elTime.textContent = timeFormatted;
-
-  // Se a página ficar aberta durante a meia-noite, reseta a contagem
-  const today = getTodayString();
-  if (localStorage.getItem('pdm_order_date') && localStorage.getItem('pdm_order_date') !== today) {
-    updateOrderDisplay();
-  }
+  if (elDate) elDate.textContent = now.toLocaleDateString('pt-BR');
+  if (elTime) elTime.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Inicialização imediata
+setInterval(updateClock, 1000);
 updateClock();
-updateOrderDisplay();
-setInterval(updateClock, 1000); // Atualiza com precisão a cada segundo
+fetchCurrentGlobalOrder();
 
-// Ajuste da quantidade da montagem atual
 function adjustItemQty(delta){
   tempQty = Math.max(1, Math.min(99, tempQty + delta));
   document.getElementById('tempQty').textContent = tempQty;
 }
 
-// Lógica de seleção dos adicionais
+function adjustDrinkQty(drinkKey, delta){
+  drinks[drinkKey].qty = Math.max(0, Math.min(99, drinks[drinkKey].qty + delta));
+  if(drinkKey === 'cocaTrad') document.getElementById('qtyCocaTrad').textContent = drinks[drinkKey].qty;
+  if(drinkKey === 'cocaZero') document.getElementById('qtyCocaZero').textContent = drinks[drinkKey].qty;
+  renderCart();
+}
+
 function toggleAdicional(el) {
   const nenhumCheck = document.getElementById('add-nenhum');
   const items = document.querySelectorAll('.add-item');
@@ -548,14 +600,11 @@ function toggleAdicional(el) {
       nenhumCheck.checked = false;
     } else {
       const anyChecked = Array.from(items).some(cb => cb.checked);
-      if (!anyChecked) {
-        nenhumCheck.checked = true;
-      }
+      if (!anyChecked) nenhumCheck.checked = true;
     }
   }
 }
 
-// Adicionar panqueca ao pedido
 document.getElementById('btnAdd').addEventListener('click', () => {
   const recheio = document.querySelector('input[name="recheio"]:checked').value;
   const massa = document.querySelector('input[name="massa"]:checked').value;
@@ -580,7 +629,6 @@ document.getElementById('btnAdd').addEventListener('click', () => {
 
   tempQty = 1;
   document.getElementById('tempQty').textContent = tempQty;
-
   renderCart();
 });
 
@@ -594,18 +642,21 @@ function renderCart() {
   const totalEl = document.getElementById('total');
   const noteEl = document.getElementById('priceNote');
 
-  if (cart.length === 0) {
+  let totalCount = 0;
+  cart.forEach(item => totalCount += item.qty);
+
+  const drinksTotal = (drinks.cocaTrad.qty * drinks.cocaTrad.price) + (drinks.cocaZero.qty * drinks.cocaZero.price);
+
+  if (cart.length === 0 && drinksTotal === 0) {
     listEl.innerHTML = `<div class="empty-note">Nenhuma panqueca adicionada ainda.<br>Monte sua panqueca acima e clique em "Adicionar esta panqueca".</div>`;
     totalEl.textContent = money(0);
-    noteEl.textContent = "Adicione panquecas para calcular o valor.";
+    noteEl.textContent = "Adicione itens para calcular o valor.";
     return;
   }
 
   listEl.innerHTML = "";
-  let totalCount = 0;
 
   cart.forEach((item, index) => {
-    totalCount += item.qty;
     const itemEl = document.createElement('div');
     itemEl.className = 'cart-item';
     itemEl.innerHTML = `
@@ -624,18 +675,22 @@ function renderCart() {
 
   const pairs = Math.floor(totalCount / 2);
   const singles = totalCount % 2;
-  const total = (pairs * 21.99) + (singles * 12.99);
+  const panquecasTotal = (pairs * 21.99) + (singles * 12.99);
+  const totalGeral = panquecasTotal + drinksTotal;
 
-  totalEl.textContent = money(total);
+  totalEl.textContent = money(totalGeral);
 
   let details = [];
   if (pairs) details.push(`${pairs} par(es) × R$ 21,99`);
   if (singles) details.push(`${singles} unidade(s) × R$ 12,99`);
-  noteEl.textContent = `${totalCount} panqueca(s) no total: ${details.join(' + ')}.`;
+  if (drinks.cocaTrad.qty > 0) details.push(`${drinks.cocaTrad.qty}x Coca Tradicional`);
+  if (drinks.cocaZero.qty > 0) details.push(`${drinks.cocaZero.qty}x Coca Zero`);
+
+  noteEl.textContent = details.join(' + ') + '.';
 }
 
-// Disparo WhatsApp
-document.getElementById('send').addEventListener('click', () => {
+// Finalizar pedido e enviar pelo WhatsApp
+document.getElementById('send').addEventListener('click', async () => {
   const err = document.getElementById('error');
 
   if (cart.length === 0) {
@@ -656,11 +711,10 @@ document.getElementById('send').addEventListener('click', () => {
 
   err.style.display = 'none';
 
-  // Obter e incrementar o número sequencial do pedido
-  const orderNumber = commitOrderNumber();
+  // Incrementar e obter o número geral do pedido
+  const orderNumber = await commitGlobalOrder();
   const orderFormatted = '#' + String(orderNumber).padStart(3, '0');
 
-  // Capturar data e hora exatas do envio
   const now = new Date();
   const dateFormatted = now.toLocaleDateString('pt-BR');
   const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -669,12 +723,15 @@ document.getElementById('send').addEventListener('click', () => {
   cart.forEach(i => totalCount += i.qty);
   const pairs = Math.floor(totalCount / 2);
   const singles = totalCount % 2;
-  const total = (pairs * 21.99) + (singles * 12.99);
+  const panquecasTotal = (pairs * 21.99) + (singles * 12.99);
+  const drinksTotal = (drinks.cocaTrad.qty * drinks.cocaTrad.price) + (drinks.cocaZero.qty * drinks.cocaZero.price);
+  const total = panquecasTotal + drinksTotal;
 
   const referencia = document.getElementById('referencia').value.trim();
   const obs = document.getElementById('obs').value.trim();
+  const pagamento = document.querySelector('input[name="pagamento"]:checked').value;
 
-  // Mensagem formatada
+  // Montagem da mensagem WhatsApp
   let msg = `🥞 *NOVO PEDIDO — PRAZERES DA MASSA* ❤️\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `🧾 *Pedido:* ${orderFormatted}\n`;
@@ -686,7 +743,7 @@ document.getElementById('send').addEventListener('click', () => {
   if (referencia) msg += `🗺️ *Referência:* ${referencia}\n`;
   if (obs) msg += `📝 *Observações:* ${obs}\n`;
 
-  msg += `\n🥞 *PANQUECAS DO PEDIDO:*\n`;
+  msg += `\n🥞 *INFORMAÇÕES DO PEDIDO:*\n`;
   cart.forEach((item) => {
     msg += `\n*${item.qty}x ${item.recheio}*\n`;
     msg += `  • Massa: ${item.massa}\n`;
@@ -694,22 +751,28 @@ document.getElementById('send').addEventListener('click', () => {
     msg += `  • Adicionais: ${item.adicionais.join(', ')}\n`;
   });
 
+  if (drinks.cocaTrad.qty > 0 || drinks.cocaZero.qty > 0) {
+    msg += `\n🥤 *BEBIDAS:*\n`;
+    if (drinks.cocaTrad.qty > 0) msg += `  • ${drinks.cocaTrad.qty}x Coca-Cola (Tradicional) — ${money(drinks.cocaTrad.qty * drinks.cocaTrad.price)}\n`;
+    if (drinks.cocaZero.qty > 0) msg += `  • ${drinks.cocaZero.qty}x Coca-Cola (Zero) — ${money(drinks.cocaZero.qty * drinks.cocaZero.price)}\n`;
+  }
+
   msg += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `📦 *Total de Panquecas:* ${totalCount} unidade(s)\n`;
+  msg += `💳 *Forma de Pagamento:* ${pagamento}\n`;
   msg += `💰 *Valor Total:* ${money(total)}\n`;
   msg += `🛵 *Entrega:* Grátis (Chapadinha–MA)\n`;
-  msg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
 
-  // Dados do PIX
-  msg += `💳 *Chave PIX para pagamento (celular):*\n`;
-  msg += `98982878794\n`;
-  msg += `Romilly Sousa Prazeres\n`;
-  msg += `Mercado Pago\n\n`;
-  msg += `⚠️ *OBS:* Enviar comprovante para este contato.\n\n`;
-  msg += `Obrigado pelo seu pedido e preferência!`;
+  // Lógica de exibição da chave PIX
+  if (pagamento === "Pix") {
+    msg += `\n💳 *Chave PIX para pagamento (celular):*\n`;
+    msg += `98982878794 - Romilly Sousa Prazeres\n`;
+  }
 
   const url = `https://wa.me/${WHATSAPP_NUM}?text=` + encodeURIComponent(msg);
   window.open(url, '_blank', 'noopener');
+  fetchCurrentGlobalOrder();
 });
 </script>
 </body>
