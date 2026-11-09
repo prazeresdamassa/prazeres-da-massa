@@ -1,0 +1,4 @@
+# Copie para .dev.vars somente no seu computador. Não envie segredos ao GitHub.
+# Use senhas diferentes, aleatórias, com no mínimo 16 caracteres.
+ADMIN_PASSWORD=substitua-por-uma-senha-forte-e-unica
+SESSION_SECRET=substitua-por-outro-segredo-aleatorio-de-32-caracteres

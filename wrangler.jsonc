@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "prazeres-da-massa",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "prazeres-da-massa",
+    "database_id": "SUBSTITUA_PELO_ID_DO_BANCO_D1",
+    "migrations_dir": "migrations"
+  }],
+  "triggers": { "crons": ["0 7 * * *"] },
+  "observability": { "enabled": false }
+}
