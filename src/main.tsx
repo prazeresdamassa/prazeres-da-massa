@@ -59,7 +59,7 @@ function App() {
   const [toast, setToast] = useState(''); const [error, setError] = useState(''); const [storageWarning, setStorageWarning] = useState(false);
   const [info, setInfo] = useState<'hours' | 'privacy' | null>(null);
   const [checkout, setCheckout] = useState(false); const [receipt, setReceipt] = useState<Receipt | null>(null); const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<{ open: boolean; today: string } | null>(null); const [statusError, setStatusError] = useState(false);
+  const [status, setStatus] = useState<{ open: boolean; today: string; ready?: boolean } | null>(null); const [statusError, setStatusError] = useState(false);
   const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', neighborhood: '', reference: '', notes: '', payment: 'pix', privacy: false });
   const attempt = useRef<{ signature: string; key: string } | null>(null);
   const sending = useRef(false);

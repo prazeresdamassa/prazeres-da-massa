@@ -1,6 +1,7 @@
 import { SHOP, ValidationError, shopStatus, validateOrder, totals, whatsappMessage, statusLabels, type OrderStatus, type OrderInput } from '../shared/domain';
 export interface Env { DB: D1Database; ASSETS: Fetcher; ADMIN_PASSWORD?: string; SESSION_SECRET?: string }
 type Row = { id: number; request_hash: string; created_at: string; status: OrderStatus; customer_json: string; items_json: string; total_cents: number; updated_at: string };
+const configured = (env: Env) => !!env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length >= 16 && !!env.SESSION_SECRET && env.SESSION_SECRET.length >= 32;
 const encoder = new TextEncoder();
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 const fail = (message: string, status: number) => json({ error: message }, status);
@@ -55,8 +56,9 @@ const transitions: Record<OrderStatus, OrderStatus[]> = {
 async function api(req: Request, env: Env) {
   const url = new URL(req.url); const path = url.pathname;
   if (req.method !== 'GET' && req.headers.get('Origin') !== url.origin) return fail('Origem não autorizada.', 403);
-  if (path === '/api/status' && req.method === 'GET') return json({ ...shopStatus(), serverTime: new Date().toISOString() });
+  if (path === '/api/status' && req.method === 'GET') return json({ ...shopStatus(), open: configured(env) && shopStatus().open, ready: configured(env), ...(!configured(env) ? { today: 'Estamos preparando o atendimento' } : {}), serverTime: new Date().toISOString() });
   if (path === '/api/orders' && req.method === 'POST') {
+    if (!configured(env)) return fail('A loja está finalizando a configuração do atendimento. Tente mais tarde.', 503);
     const key = req.headers.get('Idempotency-Key') ?? '';
     if (!/^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(key)) return fail('Identificador do pedido inválido.', 400);
     if (!await rateLimit(req, env, 'order', 20, 600)) return fail('Muitas tentativas. Aguarde alguns minutos.', 429);
