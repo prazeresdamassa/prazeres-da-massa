@@ -2,6 +2,19 @@
 
 Cardápio responsivo com React 19 + TypeScript, API em Cloudflare Workers e banco SQLite/D1. Preparado para um repositório privado no GitHub e para o plano gratuito da Cloudflare, dentro dos limites do plano. Não depende de Vercel, CounterAPI ou serviços de fontes externos em tempo de execução.
 
+## Implantação desta loja
+
+- Site publicado: https://prazeres-da-massa.prazeresdamassa.workers.dev
+- Painel: https://prazeres-da-massa.prazeresdamassa.workers.dev/admin
+- O Worker, o banco D1 e a limpeza diária já estão provisionados na conta Cloudflare da loja. Não recrie esses recursos para esta implantação.
+- O segredo `SESSION_SECRET` já foi gerado e armazenado na Cloudflare, sem inclusão no código ou no GitHub.
+- **Falta configurar `ADMIN_PASSWORD`.** No painel Cloudflare, abra Workers & Pages → prazeres-da-massa → Settings → Variables and Secrets → Add. Escolha o tipo Secret, nome `ADMIN_PASSWORD`, defina uma senha exclusiva de pelo menos 16 caracteres e salve/publice. Não compartilhe a senha pelo chat.
+- Até essa configuração, a API bloqueia novos pedidos. Depois, o atendimento segue os horários da loja automaticamente.
+- Esta publicação foi feita diretamente pela API, a partir do pacote versionado na branch `deploy/cloudflare` (commit `40b69451653e7694c46b6cf3526194f92ff85489`). A branch `feat/cardapio-cloudflare` contém as fontes. A publicação automática a partir do GitHub ainda não foi conectada.
+- Site, painel e arquivos estáticos responderam aos testes HTTP. A API administrativa rejeitou acesso sem login, e o endpoint de pedidos recusou registros antes da definição da senha. Ainda é necessária a conferência visual em um navegador e um teste operacional após a configuração da senha.
+
+Os passos de criação de recursos abaixo servem para uma nova instalação em outra conta. Para esta loja, use os recursos já existentes e a configuração de `wrangler.jsonc`.
+
 ## O que está pronto
 
 - Identidade visual em creme, marrom e terracota; marca original preservada.
