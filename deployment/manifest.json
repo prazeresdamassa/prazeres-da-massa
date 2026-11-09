@@ -1,0 +1,87 @@
+{
+  "/assets/index-C176-XK9.js": {
+    "hash": "b105e42a26232890c3669950f40e8fb1",
+    "size": 259414,
+    "mime": "text/javascript"
+  },
+  "/assets/index-CJSuuar8.css": {
+    "hash": "1fcf051635b0cffa889c8808bbdce693",
+    "size": 30954,
+    "mime": "text/css"
+  },
+  "/fonts/DM-Sans-OFL.txt": {
+    "hash": "9af36190332437f5ecd09974de43c1f7",
+    "size": 4482,
+    "mime": "text/plain"
+  },
+  "/fonts/Lora-OFL.txt": {
+    "hash": "1d9a970809ac804b582a6ce7f0ebc4e7",
+    "size": 4423,
+    "mime": "text/plain"
+  },
+  "/fonts/font-0.ttf": {
+    "hash": "b0ae3e89a7d3ef2b1838bb4b1ceb0b17",
+    "size": 48280,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-1.ttf": {
+    "hash": "376427b5322148d8de1e03f263bcca49",
+    "size": 48308,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-2.ttf": {
+    "hash": "b79a2ea7a38f33fd96a282fadb9ce976",
+    "size": 48280,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-3.ttf": {
+    "hash": "2a8e7f713ee79fbccdef3cef5c787aff",
+    "size": 48200,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-4.ttf": {
+    "hash": "26243fda8cd938cc2734f46d20d74648",
+    "size": 137328,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-5.ttf": {
+    "hash": "648252b8a79d5f6974baed600eb8bad4",
+    "size": 138288,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-6.ttf": {
+    "hash": "1d37d1e34c77be80f0119754ad78df9a",
+    "size": 132188,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-7.ttf": {
+    "hash": "9bfe70fd1d70600c523d7ef66c8a0241",
+    "size": 132320,
+    "mime": "font/ttf"
+  },
+  "/fonts/font-8.ttf": {
+    "hash": "36120862013ba0d8059ee03b3f6155d6",
+    "size": 132672,
+    "mime": "font/ttf"
+  },
+  "/fonts/fonts.css": {
+    "hash": "940a88f6061172ffd0d8e4238b8179f0",
+    "size": 1380,
+    "mime": "text/css"
+  },
+  "/index.html": {
+    "hash": "bc783d17abcce95bc3dec58eabf21297",
+    "size": 740,
+    "mime": "text/html"
+  },
+  "/logo.png": {
+    "hash": "10c5a937955072e80cea823636fae974",
+    "size": 2291593,
+    "mime": "image/png"
+  },
+  "/robots.txt": {
+    "hash": "ed7dfbf893923182b55ca848b428fe30",
+    "size": 56,
+    "mime": "text/plain"
+  }
+}
