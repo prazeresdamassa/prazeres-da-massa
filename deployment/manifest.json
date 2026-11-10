@@ -1,16 +1,16 @@
 {
-  "/assets/index-CBm7Xx45.js": {
-    "hash": "0a2b2d6ff538f1bc89d555da96cd90c0",
-    "size": 276329,
+  "/assets/index-BWPB2jpw.js": {
+    "hash": "35afbfa304584bd6fcbbcd9b69b41e75",
+    "size": 277155,
     "mime": "text/javascript"
   },
-  "/assets/index-TzaVHSdU.css": {
-    "hash": "93ad57e61593deda36cf9605d59c2977",
-    "size": 56957,
+  "/assets/index-CKcDITHL.css": {
+    "hash": "ff791cb2040eb8f4488624c36e1ffa69",
+    "size": 57153,
     "mime": "text/css"
   },
-  "/assets/leaflet-src-CFfDGtsd.js": {
-    "hash": "cbf6ebc05c90f43ba714b68bf7967535",
+  "/assets/leaflet-src-DwoTQWzp.js": {
+    "hash": "0bc295ce66bdd5ae4a488adac1767bf0",
     "size": 148602,
     "mime": "text/javascript"
   },
@@ -95,7 +95,7 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "7c25aaf925054d97dce5a5ebc50cef71",
+    "hash": "f24f34a261418fbe8a84914ffe978d49",
     "size": 745,
     "mime": "text/html"
   },
