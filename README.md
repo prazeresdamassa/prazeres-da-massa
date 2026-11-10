@@ -9,7 +9,7 @@ Cardápio responsivo com React 19 + TypeScript, API em Cloudflare Workers e banc
 - O Worker, o banco D1 e a limpeza diária já estão provisionados na conta Cloudflare da loja. Não recrie esses recursos para esta implantação.
 - O segredo `SESSION_SECRET` já foi gerado e armazenado na Cloudflare, sem inclusão no código ou no GitHub.
 - **Falta configurar `ADMIN_PASSWORD`.** No painel Cloudflare, abra Workers & Pages → prazeres-da-massa → Settings → Variables and Secrets → Add. Escolha o tipo Secret, nome `ADMIN_PASSWORD`, defina uma senha exclusiva de pelo menos 16 caracteres e salve/publice. Não compartilhe a senha pelo chat.
-- Até essa configuração, a API bloqueia novos pedidos. Depois, o atendimento segue os horários da loja automaticamente.
+- Até essa configuração, a API bloqueia novos pedidos. Depois, ligue Receber pedidos no painel para abrir o atendimento.
 - Esta publicação foi feita diretamente pela API, a partir do pacote versionado na branch `deploy/cloudflare` (commit `40b69451653e7694c46b6cf3526194f92ff85489`). A branch `feat/cardapio-cloudflare` contém as fontes. A publicação automática a partir do GitHub ainda não foi conectada.
 - Site, painel e arquivos estáticos responderam aos testes HTTP. A API administrativa rejeitou acesso sem login, e o endpoint de pedidos recusou registros antes da definição da senha. Ainda é necessária a conferência visual em um navegador e um teste operacional após a configuração da senha.
 
@@ -24,6 +24,12 @@ O cardápio possui categorias Panquecas, Massas e Bebidas. A categoria Massas ag
 A interface e o painel usam Inter, do Google Fonts, com pesos 400–700, textos ampliados e contraste. Os arquivos são hospedados localmente; o cupom impresso mantém Arial para compatibilidade com drivers. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
 
 Para a Epson L355, selecione a impressora no diálogo do navegador, papel personalizado **102 × 152 mm**, orientação retrato, escala **100%** e desative cabeçalhos/rodapés do navegador. O CSS reserva 5 mm de margem por lado. Se o driver oferecer somente 10 × 15 cm (100 × 150 mm), crie o formato personalizado para corresponder à folha real. O site solicita o tamanho; o formato final e o alinhamento dependem do driver e do carregamento correto do papel. Pedidos extensos continuam em outras folhas, sem cortar o conteúdo. Faça a primeira impressão de conferência antes do uso diário. Não há impressão silenciosa ou acesso direto à impressora.
+
+## Controle manual de atendimento
+
+O bloqueio por relógio foi substituído pela chave **Receber pedidos**, no topo do painel administrativo. Ligado libera novos pedidos em qualquer horário; desligado pausa novos registros e preserva carrinhos e pedidos já existentes. A escolha é salva no D1, sem voltar automaticamente conforme os horários. Os horários exibidos no cardápio são apenas referência. O servidor verifica a chave a cada novo pedido; a vitrine consulta o estado a cada 30 segundos. Um pedido já registrado pode ser recuperado pela mesma tentativa mesmo após fechar a loja.
+
+A migração `0002_shop_settings.sql` inicia a chave desligada. Somente administradores autenticados podem alterá-la; pedidos também precisam dos segredos administrativos configurados. A inserção verifica a chave no próprio SQL para evitar a aceitação de uma solicitação que chegou enquanto a loja estava sendo pausada.
 
 ## O que está pronto
 
@@ -40,8 +46,8 @@ Para a Epson L355, selecione a impressora no diálogo do navegador, papel person
 
 ## Fluxo real de atendimento
 
-1. O cliente monta o carrinho. Fora do horário ele pode montar, mas não registrar novos pedidos.
-2. Durante o atendimento, preenche os dados. A API valida tudo, calcula o preço e grava o pedido como **aguardando confirmação**.
+1. O cliente monta o carrinho. Com a chave desligada ele pode montar, mas não registrar novos pedidos.
+2. Com o atendimento ligado, preenche os dados. A API valida tudo, calcula o preço e grava o pedido como **aguardando confirmação**.
 3. O site mostra o número e um botão para abrir o WhatsApp. O cliente precisa tocar em **enviar** no próprio WhatsApp.
 4. A loja confirma disponibilidade e área de entrega. No painel, altera a situação do pedido e conversa com o cliente pelo WhatsApp.
 
