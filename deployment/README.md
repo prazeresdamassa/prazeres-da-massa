@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare 902e221. Mensagem: Seu pedido foi concluido e recebido! Apenas teste. Sem segredos.
+Fonte feat/cardapio-cloudflare a031980. Orientacao GPS simplificada e destaque do ponto incluido. Apenas teste. Sem segredos.
