@@ -128,9 +128,9 @@ export default {
     try { res = new URL(req.url).pathname.startsWith('/api/') ? await api(req, env) : await env.ASSETS.fetch(req); }
     catch (error) { res = error instanceof ValidationError ? fail(error.message, 400) : fail('Serviço indisponível no momento. Seu carrinho permanece salvo; tente novamente.', 503); }
     const headers = new Headers(res.headers);
-    headers.set('X-Content-Type-Options', 'nosniff'); headers.set('Referrer-Policy', 'no-referrer');
-    headers.set('X-Frame-Options', 'DENY'); headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'");
+    headers.set('X-Content-Type-Options', 'nosniff'); headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    headers.set('X-Frame-Options', 'DENY'); headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
+    headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'");
     if (new URL(req.url).pathname.startsWith('/admin')) headers.set('X-Robots-Tag', 'noindex, nofollow');
     return new Response(res.body, { status: res.status, headers });
   },
