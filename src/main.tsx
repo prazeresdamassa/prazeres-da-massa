@@ -6,6 +6,7 @@ import './styles.css';
 import './enhancements.css';
 import { PrintReceipt } from './PrintReceipt';
 import { DeliveryMap } from './DeliveryMap';
+import { OrderSuccess } from './OrderSuccess';
 import { preparedStatusMessage } from '../shared/customer-messages';
 
 const CART_KEY = 'pdm:cart:v1';
@@ -58,6 +59,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 }
 function App() {
   const mapTest = new URLSearchParams(location.search).get('teste') === 'mapa';
+  const [mapLocationRequired, setMapLocationRequired] = useState(false);
   const [cart, setCart] = useState<Cart>(readCart);
   const [addedItem, setAddedItem] = useState<string | null>(null);
   const [drinkQuantities, setDrinkQuantities] = useState<Record<string, number>>({});
@@ -112,6 +114,7 @@ function App() {
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (sending.current) return;
+    if (mapTest && mapLocationRequired && !customer.location) { setError('Marque seu ponto de entrega no mapa ou desmarque Usar minha localização para concluir sem enviá-la.'); return; }
     setError(''); sending.current = true; setBusy(true);
     try {
       const body = { cart, customer }; const raw = JSON.stringify(body);
@@ -121,7 +124,7 @@ function App() {
       if (attempt.current?.signature !== hash) attempt.current = { signature: hash, key: crypto.randomUUID() };
       try { localStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt.current)); } catch { /* ref ainda protege esta aba */ }
       const result = await request<Receipt>('/api/orders', { method: 'POST', headers: { 'Idempotency-Key': attempt.current!.key }, body: raw });
-      setReceipt(result); setCheckout(false); setCart(emptyCart());
+      setReceipt(result); setCheckout(false); setCart(emptyCart()); setMapLocationRequired(false);
       setCustomer({ name: '', phone: '', address: '', number: '', neighborhood: '', reference: '', notes: '', payment: 'pix', privacy: false });
       attempt.current = null; try { localStorage.removeItem(ATTEMPT_KEY); } catch { /* opcional */ }
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível registrar o pedido. Tente novamente.'); }
@@ -180,16 +183,16 @@ function App() {
       <div className="form-grid"><label>Seu nome<input required autoComplete="name" maxLength={80} minLength={2} value={customer.name} onChange={e => setCustomer(c => ({ ...c, name: e.target.value }))}/></label><label>WhatsApp com DDD<input required type="tel" autoComplete="tel-national" maxLength={22} placeholder="(98) 99999-9999" value={customer.phone} onChange={e => setCustomer(c => ({ ...c, phone: e.target.value }))}/></label></div>
       <div className="form-grid"><label>Rua / Avenida<input required minLength={2} maxLength={200} autoComplete="address-line1" placeholder="Nome da rua ou avenida" value={customer.address} onChange={e => setCustomer(c => ({ ...c, address: e.target.value }))}/></label><label>Número<input required maxLength={20} placeholder="Ex.: 123 ou S/N" value={customer.number ?? ''} onChange={e => setCustomer(c => ({ ...c, number: e.target.value }))}/></label></div>
       <div className="form-grid"><label>Bairro<input required minLength={2} maxLength={80} autoComplete="address-level3" value={customer.neighborhood} onChange={e => setCustomer(c => ({ ...c, neighborhood: e.target.value }))}/></label><label>Referência <span className="optional">(opcional)</span><input maxLength={200} value={customer.reference} onChange={e => setCustomer(c => ({ ...c, reference: e.target.value }))}/></label></div>
-      {mapTest && <DeliveryMap value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
+      {mapTest && <DeliveryMap onSelectionChange={setMapLocationRequired} value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
       <fieldset className="payment"><legend>Como prefere pagar?</legend><label><input type="radio" name="payment" checked={customer.payment === 'pix'} onChange={() => setCustomer(c => ({ ...c, payment: 'pix' }))}/> Pix</label><label><input type="radio" name="payment" checked={customer.payment === 'card'} onChange={() => setCustomer(c => ({ ...c, payment: 'card' }))}/> Cartão por aproximação</label></fieldset>
       {customer.payment === 'pix' && <p className="pix-notice">Chave Pix: <strong>{SHOP.pix}</strong><br/>Titular: {SHOP.pixOwner}. Aguarde a confirmação da loja antes de pagar.</p>}
       <label>Alguma observação? <span className="optional">(opcional)</span><textarea maxLength={500} rows={2} placeholder="Preferências de preparo ou instruções para entrega" value={customer.notes} onChange={e => setCustomer(c => ({ ...c, notes: e.target.value }))}/></label>
       <label className="privacy-consent"><input type="checkbox" required checked={customer.privacy} onChange={e => setCustomer(c => ({ ...c, privacy: e.target.checked }))}/><span>Li o aviso abaixo e estou ciente do uso dos meus dados para atender e entregar este pedido.</span></label>
       <details className="privacy-details"><summary>Aviso de privacidade</summary><Privacy/></details>
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="primary full" disabled={busy} type="submit">{busy ? 'Registrando seu pedido…' : 'Concluir pedido'} {!busy && <ArrowRight size={17}/>}</button><p className="hint">Depois, envie a mensagem no WhatsApp para falar com a loja. O pagamento não é processado neste site.</p>
+      <button className="primary full" disabled={busy} type="submit">{busy ? 'Registrando seu pedido…' : 'Concluir pedido'} {!busy && <ArrowRight size={17}/>}</button><p className="hint">{mapTest ? 'Seu pedido será registrado no painel da loja. Aguarde a confirmação pelo WhatsApp.' : 'Depois, envie a mensagem no WhatsApp para falar com a loja. O pagamento não é processado neste site.'}</p>
     </form></Modal>}
-    {receipt && <Modal title="Seu pedido foi registrado!" onClose={() => setReceipt(null)}><div className="success"><span><CheckCircle2 size={38}/></span><h3>Pedido {receipt.label}</h3><p>Total: <strong>{money(receipt.totalCents)}</strong></p><div className="pending-badge"><Clock3 size={15}/> Aguardando confirmação da loja</div><p>Agora envie os detalhes pelo WhatsApp. A loja vai confirmar o preparo e a entrega com você.</p><a className="primary full" href={receipt.whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle size={19}/> Abrir pedido no WhatsApp</a><p className="hint">Na conversa, toque em enviar. Abrir o WhatsApp não envia a mensagem automaticamente. Anote seu número antes de fechar esta janela.</p></div></Modal>}
+    {receipt && <Modal title={mapTest ? 'Pedido concluído!' : 'Seu pedido foi registrado!'} onClose={() => setReceipt(null)}><OrderSuccess receipt={receipt} panelOnly={mapTest}/></Modal>}
   </>;
 }
 function Privacy() {
