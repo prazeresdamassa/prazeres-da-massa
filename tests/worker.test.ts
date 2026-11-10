@@ -6,7 +6,7 @@ import worker, { type Env } from '../worker/index';
 import type { OrderInput } from '../shared/domain';
 class LocalDB {
   sqlite = new DatabaseSync(':memory:');
-  constructor() { this.sqlite.exec(readFileSync(new URL('../migrations/0001_orders.sql', import.meta.url), 'utf8')); }
+  constructor() { for (const name of ['0001_orders.sql','0002_shop_settings.sql']) this.sqlite.exec(readFileSync(new URL('../migrations/'+name, import.meta.url), 'utf8')); this.sqlite.exec('UPDATE shop_settings SET accepting_orders = 1'); }
   prepare(sql: string) {
     const query = this.sqlite.prepare(sql); let values: (string | number | null)[] = [];
     const statement = {
@@ -42,6 +42,7 @@ test('API grava em SQLite, recalcula total, reutiliza tentativa e evita exposiç
   assert.equal((await call('/api/admin/orders')).status, 401);
   assert.equal((await call('/api/orders/1')).status, 404);
   t.mock.timers.setTime(new Date('2026-11-13T02:00:00Z').getTime());
+  db.sqlite.exec('UPDATE shop_settings SET accepting_orders = 0');
   assert.equal((await call('/api/orders', 'POST', payload, { 'Idempotency-Key': crypto.randomUUID() })).status, 409);
   assert.equal((await call('/api/orders', 'POST', payload, { 'Idempotency-Key': key })).status, 200);
   db.sqlite.close();
@@ -95,5 +96,21 @@ test('tentativas simultâneas com a mesma chave criam um único registro', async
   const rows = await Promise.all(responses.map(r => r.json() as Promise<{ id: number }>));
   assert.equal(rows[0].id, rows[1].id);
   assert.equal((db.sqlite.prepare('SELECT count(*) as n FROM orders').get() as { n: number }).n, 1);
+  db.sqlite.close();
+});
+
+test('chave exige login e controla pedidos fora de qualquer horário', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-09T12:00:00Z') });
+  const { call, db } = setup();
+  assert.equal((await call('/api/admin/settings', 'PATCH', { acceptingOrders: false })).status, 401);
+  const login = await call('/api/admin/login', 'POST', { password: 'uma-senha-de-teste-comprida' });
+  const headers = { Cookie: login.headers.get('Set-Cookie')!.split(';')[0] };
+  assert.equal((await call('/api/orders', 'POST', payload, { 'Idempotency-Key': crypto.randomUUID() })).status, 201);
+  assert.equal((await call('/api/admin/settings','PATCH',{ acceptingOrders: false },headers)).status, 200);
+  assert.equal((await (await call('/api/status')).json() as { open: boolean }).open, false);
+  assert.equal((await call('/api/orders','POST',payload,{ 'Idempotency-Key': crypto.randomUUID() })).status, 409);
+  assert.equal((await call('/api/admin/settings','PATCH',{ acceptingOrders: true },headers)).status, 200);
+  assert.equal((await (await call('/api/status')).json() as { open: boolean }).open, true);
+  assert.equal((await call('/api/orders','POST',payload,{ 'Idempotency-Key': crypto.randomUUID() })).status, 201);
   db.sqlite.close();
 });
