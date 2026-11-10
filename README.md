@@ -152,7 +152,7 @@ O build do Git não precisa receber a senha do painel. Os segredos pertencem ao 
 - Componentes e textos: `src/main.tsx`.
 - Estilos próprios: `src/styles.css`. Não há dependência de Tailwind neste projeto.
 - API, autorização e política de retenção: `worker/index.ts`.
-- Marca original: `public/logo.png`, obtida da página existente da loja. Fontes DM Sans e Lora distribuídas com as respectivas licenças OFL em `public/fonts`.
+- Logo atual: `public/logo-nova.png`, enviada pelo proprietário. Fonte Inter hospedada localmente com licença OFL em `public/fonts`.
 - O cardápio é publicado no build. O painel gerencia os pedidos; não inclui edição de catálogo, estoque, várias contas, notificações automáticas, emissão fiscal ou conciliação financeira.
 - O relógio do cliente não decide se um pedido pode ser registrado: a API é a autoridade. A interface consulta o servidor a cada 30 segundos.
 - O número do pedido é uma sequência global única; eventuais intervalos na sequência são normais. A limpeza não reinicia a sequência.
@@ -186,8 +186,8 @@ Antes de divulgar o endereço, faça um pedido identificado como teste durante o
 
 O aviso de privacidade fornecido descreve o comportamento implementado; ajuste-o se o uso dos dados ou a operação da loja mudar. As mensagens no WhatsApp e dados mantidos em outros sistemas não são apagados pelo cron deste site. Não há rotina de backup externo configurada: use as opções de recuperação/exportação do D1 conforme a necessidade do negócio e a política de retenção.
 
-## Ajustes de identidade em preparação
+## Identidade Massas Artesanais
 
 Banner com “Massas Artesanais”, título “Seu sabor. Suas escolhas. Seu pedido.”, instruções de personalização e CTA “Monte seu pedido!”. O preço sobreposto foi removido do banner, preservando preços no catálogo e no carrinho. Adicionais em destaque e lixeira explícita para remover cada refrigerante do carrinho. Inter (Google Fonts) hospedada localmente com licença OFL.
 
-**Aguardando a logo original em arquivo PNG/JPG ou URL direta.** A imagem enviada na conversa não ficou acessível como arquivo no ambiente; o código do banner está preparado para exibir a arte inteira, sem recorte. Estas últimas alterações estão preparadas na branch de fontes; a publicação aguarda a substituição do arquivo da logo para não reutilizar a imagem antiga por engano.
+Logo recebida pelo GitHub em `public/logo-nova.png`. O banner exibe a arte inteira, sem recorte e sem preço sobreposto. O arquivo também é usado como ícone do site. Os preços dos produtos e as regras de promoção no carrinho continuam válidos.

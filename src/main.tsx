@@ -138,7 +138,7 @@ function App() {
           <a href="#categorias" onClick={() => setCategory('panquecas')} className="primary hero-cta">Monte seu pedido! <ArrowRight size={18}/></a>
           <div className="hero-foot"><span><Truck size={17}/> Entrega grátis*</span><span><Heart size={16}/> Feita com carinho</span></div>
         </div>
-        <div className="hero-art"><img src="/logo.png" alt="Prazeres da Massa — Massas Artesanais" fetchPriority="high" width="1254" height="1254"/></div>
+        <div className="hero-art"><img src="/logo-nova.png" alt="Prazeres da Massa — Massas Artesanais" fetchPriority="high" width="1254" height="1254"/></div>
       </section>
       <div className="service-bar"><div className={`opening ${status?.open ? 'is-open' : ''}`}><span className="status-dot"/><strong>{statusError ? 'Horário indisponível' : !status ? 'Consultando horário…' : status.open ? 'Estamos abertos' : 'Fechado agora'}</strong><span className="today">{status?.today}</span></div><button onClick={() => setInfo('hours')}>Ver horários <ChevronRight size={15}/></button><div className="service-delivery"><Truck size={18}/><span>Entrega grátis em Chapadinha*</span></div></div>
       <div className="menu-layout">
