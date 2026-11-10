@@ -114,3 +114,22 @@ test('chave exige login e controla pedidos fora de qualquer horário', async t =
   assert.equal((await call('/api/orders','POST',payload,{ 'Idempotency-Key': crypto.randomUUID() })).status, 201);
   db.sqlite.close();
 });
+
+test('sonda autenticada identifica apenas pedidos novos e não expõe dados pessoais', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-12T22:00:00Z') });
+  const { call, db } = setup();
+  assert.equal((await call('/api/admin/orders/latest')).status, 401);
+  const login = await call('/api/admin/login', 'POST', { password: 'uma-senha-de-teste-comprida' });
+  const headers = { Cookie: login.headers.get('Set-Cookie')!.split(';')[0] };
+  assert.deepEqual(await (await call('/api/admin/orders/latest','GET',undefined,headers)).json(), { latestId: 0 });
+  const created = await call('/api/orders','POST',payload,{ 'Idempotency-Key': crypto.randomUUID() });
+  const { id } = await created.json() as { id: number };
+  assert.deepEqual(await (await call('/api/admin/orders/latest','GET',undefined,headers)).json(), { latestId: id });
+  await call(`/api/admin/orders/${id}`,'PATCH',{ previousStatus: 'pending', status: 'accepted' },headers);
+  assert.deepEqual(await (await call('/api/admin/orders/latest','GET',undefined,headers)).json(), { latestId: id });
+  const second = await call('/api/orders','POST',payload,{ 'Idempotency-Key': crypto.randomUUID() });
+  const newer = await second.json() as { id: number };
+  assert.ok(newer.id > id);
+  assert.deepEqual(await (await call('/api/admin/orders/latest','GET',undefined,headers)).json(), { latestId: newer.id });
+  db.sqlite.close();
+});
