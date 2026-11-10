@@ -85,6 +85,17 @@ function validateCart(value) {
   return { pancakes, drinks: result };
 }
 __name(validateCart, "validateCart");
+function validateLocation(value) {
+  if (value === void 0 || value === null) return void 0;
+  const p = record(value);
+  if (typeof p.latitude !== "number" || typeof p.longitude !== "number" || !Number.isFinite(p.latitude) || !Number.isFinite(p.longitude) || p.latitude < -90 || p.latitude > 90 || p.longitude < -180 || p.longitude > 180) throw new ValidationError("Ponto de entrega inv\xE1lido. Marque novamente ou remova a localiza\xE7\xE3o.");
+  return { latitude: Number(p.latitude.toFixed(6)), longitude: Number(p.longitude.toFixed(6)) };
+}
+__name(validateLocation, "validateLocation");
+function locationUrl(location) {
+  return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+}
+__name(locationUrl, "locationUrl");
 function validateOrder(value) {
   const v = record(value);
   const cart = validateCart(v.cart);
@@ -95,6 +106,7 @@ function validateOrder(value) {
   if (c.payment !== "pix" && c.payment !== "card") throw new ValidationError("Escolha a forma de pagamento.");
   if (c.privacy !== true) throw new ValidationError("Confirme a leitura do aviso de privacidade.");
   return { cart, customer: {
+    ...c.location != null ? { location: validateLocation(c.location) } : {},
     name: text(c.name, "o nome", 2, 80),
     phone,
     address: text(c.address, "a rua", 2, 200),
@@ -143,6 +155,7 @@ function whatsappMessage(id, order, createdAt, savedTotalCents = totals(order.ca
     `Endere\xE7o: ${formatAddress(c)}`,
     `Bairro: ${c.neighborhood}`,
     `Cidade: ${SHOP.city}`,
+    c.location ? `Ponto de entrega: ${locationUrl(c.location)}` : "",
     c.reference ? `Refer\xEAncia: ${c.reference}` : "",
     "",
     "*Seu pedido*",
@@ -337,10 +350,10 @@ var index_default = {
     }
     const headers = new Headers(res.headers);
     headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Referrer-Policy", "no-referrer");
+    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     headers.set("X-Frame-Options", "DENY");
-    headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'");
+    headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+    headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'");
     if (new URL(req.url).pathname.startsWith("/admin")) headers.set("X-Robots-Tag", "noindex, nofollow");
     return new Response(res.body, { status: res.status, headers });
   },
