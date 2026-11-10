@@ -15,6 +15,14 @@ Cardápio responsivo com React 19 + TypeScript, API em Cloudflare Workers e banc
 
 Os passos de criação de recursos abaixo servem para uma nova instalação em outra conta. Para esta loja, use os recursos já existentes e a configuração de `wrangler.jsonc`.
 
+## Menus, leitura e impressão de pedidos
+
+O cardápio possui categorias Panquecas, Massas e Bebidas. A categoria Massas aguarda cadastro de pratos e preços; a mensagem de disponibilidade futura não aceita pedidos. Panquecas têm apenas massa tradicional e verde. Pedidos históricos com massa de beterraba continuam legíveis, mas a API não aceita novos pedidos dessa opção. Itens de beterraba de carrinhos salvos são removidos, preservando os outros itens válidos.
+
+A interface e o painel usam Arial/Helvetica, com textos ampliados e mais contraste. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
+
+Para a Epson L355, selecione a impressora no diálogo do navegador, papel personalizado **102 × 152 mm**, orientação retrato, escala **100%** e desative cabeçalhos/rodapés do navegador. O CSS reserva 5 mm de margem por lado. Se o driver oferecer somente 10 × 15 cm (100 × 150 mm), crie o formato personalizado para corresponder à folha real. O site solicita o tamanho; o formato final e o alinhamento dependem do driver e do carregamento correto do papel. Pedidos extensos continuam em outras folhas, sem cortar o conteúdo. Faça a primeira impressão de conferência antes do uso diário. Não há impressão silenciosa ou acesso direto à impressora.
+
 ## O que está pronto
 
 - Identidade visual em creme, marrom e terracota; marca original preservada.
