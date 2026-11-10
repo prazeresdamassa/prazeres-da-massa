@@ -16,8 +16,7 @@ var fillings = [
 ];
 var doughs = [
   { id: "tradicional", name: "Tradicional", description: "Leve e douradinha", icon: "\u{1F95E}" },
-  { id: "verde", name: "Verde", description: "Com couve-folha", icon: "\u{1F33F}" },
-  { id: "vermelha", name: "Vermelha", description: "Com beterraba", icon: "\u2665" }
+  { id: "verde", name: "Verde", description: "Com couve-folha", icon: "\u{1F33F}" }
 ];
 var sauces = [
   { id: "tomate", name: "Tomate especial", description: "Artesanal e temperado", icon: "\u{1F345}" },
@@ -140,7 +139,7 @@ function describe(p) {
   return {
     name: fillings.find((x) => x.id === p.filling).name,
     details: [
-      doughs.find((x) => x.id === p.dough).name,
+      doughs.find((x) => x.id === p.dough)?.name ?? (p.dough === "vermelha" ? "Vermelha (beterraba \u2014 item descontinuado)" : p.dough),
       sauces.find((x) => x.id === p.sauce).name,
       ...p.extras.map((id) => extras.find((x) => x.id === id).name)
     ].join(" \xB7 ")

@@ -1,1 +1,1 @@
-Pacote gerado para publicacao direta pela API Cloudflare. Fontes na branch feat/cardapio-cloudflare. Este diretorio nao contem segredos.
+Pacote de publicacao Cloudflare. Fonte: feat/cardapio-cloudflare, commit a683977. Inclui menus, legibilidade e impressao 102x152mm. Nao contem segredos.
