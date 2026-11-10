@@ -1,17 +1,22 @@
 {
-  "/assets/index-BkAQomIT.css": {
-    "hash": "7cfc3054ed0251ad6d241a8ea25027a4",
-    "size": 37014,
-    "mime": "text/css"
-  },
-  "/assets/index-C6y_T__o.js": {
-    "hash": "72e6c7fc51686ee722449633e41ad431",
-    "size": 265399,
+  "/assets/index-ChAPay2p.js": {
+    "hash": "5fe316b6a6f9d0c782206bdb85d69fa8",
+    "size": 265471,
     "mime": "text/javascript"
+  },
+  "/assets/index-DhyG84wp.css": {
+    "hash": "bf870939c6215984b4db157c3a095fd9",
+    "size": 39858,
+    "mime": "text/css"
   },
   "/fonts/DM-Sans-OFL.txt": {
     "hash": "9af36190332437f5ecd09974de43c1f7",
     "size": 4482,
+    "mime": "text/plain"
+  },
+  "/fonts/Inter-OFL.txt": {
+    "hash": "5dd548d31a85f756e01d63e00d7faf1e",
+    "size": 4376,
     "mime": "text/plain"
   },
   "/fonts/Lora-OFL.txt": {
@@ -69,14 +74,29 @@
     "size": 1380,
     "mime": "text/css"
   },
+  "/fonts/inter-latin-ext.woff2": {
+    "hash": "34b9c504cab7a73e37b746343a449132",
+    "size": 85068,
+    "mime": "font/woff2"
+  },
+  "/fonts/inter-latin.woff2": {
+    "hash": "3100e775e8616cd2611beecfa23a4263",
+    "size": 48256,
+    "mime": "font/woff2"
+  },
+  "/fonts/inter.css": {
+    "hash": "e595f1113e17aed5488c4450548a6dd8",
+    "size": 2880,
+    "mime": "text/css"
+  },
   "/index.html": {
-    "hash": "9c49b45cb31f56b646df786a15c4797c",
-    "size": 740,
+    "hash": "143ec7891123435476519934cb8a55ac",
+    "size": 745,
     "mime": "text/html"
   },
-  "/logo.png": {
-    "hash": "10c5a937955072e80cea823636fae974",
-    "size": 2291593,
+  "/logo-nova.png": {
+    "hash": "c0b7ce1d33b4d93a83a1a0b683654142",
+    "size": 1732752,
     "mime": "image/png"
   },
   "/robots.txt": {

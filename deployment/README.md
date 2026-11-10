@@ -1,1 +1,1 @@
-Pacote Cloudflare. Fonte: feat/cardapio-cloudflare de53d68. Confirma inclusao e separa selecao de bebidas da adicao ao carrinho. Sem segredos.
+Pacote Cloudflare. Fonte: feat/cardapio-cloudflare a5ef314. Logo enviada pelo proprietario, Inter, banner sem preco e lixeira de bebidas. Sem segredos.
