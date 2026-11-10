@@ -2,13 +2,13 @@
 
 Cardápio responsivo com React 19 + TypeScript, API em Cloudflare Workers e banco SQLite/D1. Preparado para um repositório privado no GitHub e para o plano gratuito da Cloudflare, dentro dos limites do plano. Não depende de Vercel, CounterAPI ou serviços de fontes externos em tempo de execução.
 
-## Implantação desta loja
+## Implantação desta loja — produção
 
 - Site publicado: https://prazeres-da-massa.prazeresdamassa.workers.dev
 - Painel: https://prazeres-da-massa.prazeresdamassa.workers.dev/admin
 - O Worker, o banco D1 e a limpeza diária já estão provisionados na conta Cloudflare da loja. Não recrie esses recursos para esta implantação.
 - O segredo `SESSION_SECRET` já foi gerado e armazenado na Cloudflare, sem inclusão no código ou no GitHub.
-- **Falta configurar `ADMIN_PASSWORD`.** No painel Cloudflare, abra Workers & Pages → prazeres-da-massa → Settings → Variables and Secrets → Add. Escolha o tipo Secret, nome `ADMIN_PASSWORD`, defina uma senha exclusiva de pelo menos 16 caracteres e salve/publice. Não compartilhe a senha pelo chat.
+- `ADMIN_PASSWORD` e `SESSION_SECRET` já estão configurados na Cloudflare. Para trocar a senha, use Settings → Variables and Secrets no Worker, sem expor o valor no GitHub ou chat.
 - Até essa configuração, a API bloqueia novos pedidos. Depois, ligue Receber pedidos no painel para abrir o atendimento.
 - Esta publicação foi feita diretamente pela API, a partir do pacote versionado na branch `deploy/cloudflare` (commit `40b69451653e7694c46b6cf3526194f92ff85489`). A branch `feat/cardapio-cloudflare` contém as fontes. A publicação automática a partir do GitHub ainda não foi conectada.
 - Site, painel e arquivos estáticos responderam aos testes HTTP. A API administrativa rejeitou acesso sem login, e o endpoint de pedidos recusou registros antes da definição da senha. Ainda é necessária a conferência visual em um navegador e um teste operacional após a configuração da senha.
@@ -48,7 +48,7 @@ A migração `0002_shop_settings.sql` inicia a chave desligada. Somente administ
 
 1. O cliente monta o carrinho. Com a chave desligada ele pode montar, mas não registrar novos pedidos.
 2. Com o atendimento ligado, preenche os dados. A API valida tudo, calcula o preço e grava o pedido como **aguardando confirmação**.
-3. O site mostra o número e um botão para abrir o WhatsApp. O cliente precisa tocar em **enviar** no próprio WhatsApp.
+3. O site mostra o número e pede para aguardar a confirmação pelo WhatsApp. O pedido já está disponível no painel, sem depender do envio de mensagem pelo cliente.
 4. A loja confirma disponibilidade e área de entrega. No painel, altera a situação do pedido e conversa com o cliente pelo WhatsApp.
 
 O registro no banco NÃO comprova envio da mensagem, aceitação da loja ou pagamento. A loja pode ver registros de clientes que não terminaram o contato. O painel não envia mensagens automáticas nem possui acompanhamento público. A lista é atualizada pelo botão **Atualizar lista**; a filtragem é aplicada aos registros carregados, e o botão de paginação carrega os anteriores.
@@ -206,24 +206,18 @@ O cliente informa Rua / Avenida e Número separadamente; Número é obrigatório
 
 Ao avançar o pedido pelos botões Confirmar, Em preparo, Saiu para entrega e Concluído, a confirmação oferece **Salvar e abrir WhatsApp**. O status é salvo primeiro. Depois o WhatsApp do cliente recebe o texto preparado com nome, número do pedido e etapa. A equipe precisa tocar em Enviar. O site não afirma que a mensagem foi enviada ou entregue. Se a abertura for bloqueada, um link permanece disponível para abrir manualmente. Se a alteração falhar, a aba de espera é fechada e o WhatsApp não abre. Cancelamento não possui mensagem automática preparada. Não há integração com API paga ou envio em segundo plano.
 
-## Teste opcional de localização
+## Produção: localização e conclusão do pedido
 
-Use https://prazeres-da-massa.prazeresdamassa.workers.dev/?teste=mapa para o teste. O endereço sem query continua com o formulário sem mapa. O teste é público e usa o MESMO banco e a MESMA chave de atendimento: pedidos de teste aparecem no painel normal e devem conter “TESTE — NÃO PREPARAR”. Não há ambiente de dados isolado.
+As alterações validadas no teste agora são padrão em https://prazeres-da-massa.prazeresdamassa.workers.dev/ . Não é necessário usar ?teste=mapa; links antigos com esse parâmetro continuam abrindo o mesmo fluxo de produção. A faixa de teste foi removida.
 
-Na versão de teste, o mapa aparece diretamente na tela de entrega. A caixa Usar minha localização controla o envio: marcada inclui o ponto e acompanha qualquer ajuste do marcador; desmarcada remove as coordenadas. Marcar sem um ponto selecionado solicita GPS mediante permissão; se negado, selecione manualmente ou desmarque. Clique, arraste ou marque o centro com o teclado. Não há botão de confirmação do ponto. Resultados atrasados do GPS são ignorados após desmarcar ou escolher manualmente outro local. O mapa é opcional, e rua/número/bairro continuam obrigatórios. Não há geocodificação, roteamento, rastreamento ou validação automática da cobertura.
+O mapa aparece diretamente na entrega. A caixa Usar minha localização é opcional: marcada inclui o ponto, desmarcada remove as coordenadas. Marcar sem ponto solicita GPS mediante permissão; selecionar manualmente é possível se o GPS falhar. Ajustar o marcador atualiza o ponto incluído. Não há botão para confirmar o ponto, aviso de precisão ou botão Marcar centro; seleção por teclado permanece com setas e Enter. Rua, número e bairro continuam obrigatórios.
 
-As coordenadas são validadas no servidor, guardadas no JSON do pedido e expostas apenas ao painel autenticado e à mensagem WhatsApp do pedido. Pedidos antigos continuam funcionando e sem coordenadas. Os dados seguem a retenção de 90 dias; localização não é salva no localStorage. No painel, Abrir ponto de entrega no mapa usa Google Maps.
+Concluir pedido registra diretamente no painel. O cliente vê “Seu pedido foi concluído e recebido!” e “Aguarde a confirmação pelo WhatsApp”, sem botão para enviar o pedido pelo WhatsApp. No painel, Confirmar abre a mensagem preparada com confirmação e resumo (itens, quantidades, combinações, bebidas, total histórico, pagamento, endereço e observações). Demais etapas mantêm avisos curtos. A equipe ainda toca em Enviar no WhatsApp.
 
-Tiles: https://tile.openstreetmap.org/{z}/{x}/{y}.png, atribuição visível, HTTPS, referer de origem, cache normal do navegador, sem prefetch/offline. O serviço tem uso comunitário limitado e não garante disponibilidade: https://operations.osmfoundation.org/policies/tiles/. Em uso elevado, contratar provedor de tiles ou infraestrutura própria. O teste não realiza chamadas pagas nem exige chave de API.
+Coordenadas opcionais são validadas e guardadas no JSON existente, visíveis apenas no painel autenticado e nas mensagens autorizadas. Não são salvas no localStorage. Retenção de 90 dias, sem geocodificação, rotas ou rastreamento. Tiles OpenStreetMap com atribuição, referer, HTTPS e cache normal, sem prefetch/offline. Serviço comunitário sujeito a disponibilidade e limites: https://operations.osmfoundation.org/policies/tiles/ .
 
-Para voltar ao fluxo sem mapa, abra o endereço normal ou clique no link da faixa de teste. Para reverter o código, a tag `antes-do-teste-mapa-20261110` preserva a versão anterior; não restaure/apague o banco. As novas coordenadas em pedidos existentes podem continuar armazenadas até a expiração normal, sem afetar o endereço textual.
+O banco, pedidos existentes, senhas e chave Receber pedidos são preservados na promoção; nenhuma migração ou alteração de registros é necessária. A loja controla a abertura manualmente, independentemente do relógio. O pacote é publicado diretamente na Cloudflare; conexão de deploy automático pelo GitHub não está configurada.
 
-Validação: build e 17 testes aprovados. O teste adicional verifica coordenadas, arredondamento, rejeição de limites inválidos e inclusão da localização no WhatsApp. GPS e interação real em celular ainda precisam de conferência; o controle de navegador do ambiente não está disponível.
+A tag antes-promocao-producao-20261110 preserva o código anterior à promoção. Para reverter, publique a versão correspondente, sem restaurar/apagar o D1. Novos campos opcionais nos pedidos não prejudicam o endereço textual da versão anterior.
 
-### Conclusão do pedido no teste
-
-No link ?teste=mapa, Concluir pedido grava normalmente no painel e mostra o número/total com a mensagem de aguardar confirmação da loja pelo WhatsApp, sem botão para o cliente enviar o pedido. O endereço normal sem query preserva o fluxo anterior. Se a caixa estiver marcada sem um ponto válido, o formulário pede para marcar um local ou desmarcar antes de concluir. O teste continua compartilhando os dados e o atendimento reais da loja.
-
-### Resumo na confirmação ao cliente
-
-Somente Confirmar inclui resumo completo na mensagem preparada: panquecas e combinações, quantidades, bebidas, total gravado no pedido (sem recalcular preços históricos), forma de pagamento, endereço/número/bairro, referência, observações e ponto de entrega quando informado. Em preparo, Saiu para entrega e Concluído mantêm mensagens curtas. A mensagem continua sendo aberta após salvar o status e exige tocar em Enviar no WhatsApp.
+O proprietário validou o teste no celular. Verificação desta promoção: build e 19 testes aprovados, incluindo conclusão no painel sem link de envio pelo cliente, coordenadas opcionais, mensagens administrativas, impressão e controle de atendimento. O teste que preservava a conclusão antiga por WhatsApp foi removido porque esse fluxo foi substituído.
