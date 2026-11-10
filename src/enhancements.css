@@ -76,3 +76,5 @@ body,button,input,textarea,select{font-family:'Inter',Arial,Helvetica,sans-serif
 .map-test-banner{padding:12px 20px;background:#f2dfa8;color:#4b361b;text-align:center;font-size:14px;line-height:1.7}.map-test-banner a{text-decoration:underline;font-weight:600;margin-left:8px}
 
 .modal label.location-checkbox{display:flex;align-items:center;gap:12px;padding:16px 0;font-size:17px;font-weight:600;line-height:1.5}.location-checkbox input{width:22px;height:22px;flex-shrink:0}
+
+.delivery-location .map-confirmed.is-included{font-size:17px;font-weight:700;line-height:1.6;color:#234f2d;background:#e5f1e2;border:1px solid #a8c9a5;border-left:5px solid #3e6547;border-radius:8px;padding:16px;margin:16px 0 0}
