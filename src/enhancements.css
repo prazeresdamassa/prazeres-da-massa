@@ -28,3 +28,20 @@ html,body,#root{margin:0!important;padding:0!important;background:#fff!important
 .receipt-item{padding:1mm 0;break-inside:avoid;page-break-inside:avoid}.receipt-item>strong{font-size:10pt}.receipt-item p{font-size:9pt}.receipt-payment{break-inside:avoid}
 .print-receipt .receipt-total{display:flex;gap:2mm;justify-content:space-between;align-items:center;font-size:12pt;margin:2mm 0}.print-receipt footer{text-align:center;font-size:9pt;margin-top:2mm}
 }
+
+/* Confirmação de inclusão e seleção de bebidas antes de alterar o carrinho. */
+.drink-purchase{display:flex;flex-direction:column;align-items:flex-start;gap:12px;width:100%}
+.drink-add{font-size:14px;padding:11px 13px;gap:7px;flex-wrap:wrap}
+.drink-add>span{white-space:nowrap;margin-left:auto;padding-left:6px}
+.drink-content{min-width:0;width:100%}
+.drink-card{align-items:flex-start}
+.cart-drink{flex-wrap:wrap;align-items:center}
+.cart-drink>span{flex:1;min-width:140px}
+.cart-drink .counter{margin-right:auto}
+.added-confirmation{text-align:center}
+.added-confirmation>p{font-size:16px;color:var(--ink);line-height:1.6}
+.added-check{display:grid;place-items:center;width:70px;height:70px;margin:12px auto 22px;background:#e9efdf;color:var(--green);border-radius:50%}
+.added-actions{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.added-actions .primary{flex-wrap:wrap}
+#categorias,#pedido{scroll-margin-top:24px}
+@media(max-width:600px){.drink-purchase{flex-direction:row;align-items:center;flex-wrap:wrap}.drink-add{flex:1;min-width:170px}}
