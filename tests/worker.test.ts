@@ -18,7 +18,7 @@ class LocalDB {
   }
   async batch(statements: { run(): Promise<unknown> }[]) { this.sqlite.exec('BEGIN'); try { const rows = await Promise.all(statements.map(s => s.run())); this.sqlite.exec('COMMIT'); return rows; } catch (e) { this.sqlite.exec('ROLLBACK'); throw e; } }
 }
-const payload: OrderInput = { cart: { pancakes: [{ filling: 'frango', dough: 'verde', sauce: 'batata', extras: [], qty: 2 }], drinks: {} }, customer: { name: 'Teste de Integração', phone: '98999999999', address: 'Rua de Teste, 123', neighborhood: 'Centro', reference: '', notes: '', payment: 'card', privacy: true } };
+const payload: OrderInput = { cart: { pancakes: [{ filling: 'frango', dough: 'verde', sauce: 'batata', extras: [], qty: 2 }], drinks: {} }, customer: { name: 'Teste de Integração', phone: '98999999999', address: 'Rua de Teste', number: '123', neighborhood: 'Centro', reference: '', notes: '', payment: 'card', privacy: true } };
 function setup() {
   const db = new LocalDB();
   const env = { DB: db as unknown as D1Database, ASSETS: { fetch: async () => new Response('ok') } as unknown as Fetcher,

@@ -197,3 +197,7 @@ O aviso de privacidade fornecido descreve o comportamento implementado; ajuste-o
 Banner com “Massas Artesanais”, título “Seu sabor. Suas escolhas. Seu pedido.”, instruções de personalização e CTA “Monte seu pedido!”. O preço sobreposto foi removido do banner, preservando preços no catálogo e no carrinho. Adicionais em destaque e lixeira explícita para remover cada refrigerante do carrinho. Inter (Google Fonts) hospedada localmente com licença OFL.
 
 Logo recebida pelo GitHub em `public/logo-nova.png`. O banner exibe a arte inteira, sem recorte e sem preço sobreposto. O arquivo também é usado como ícone do site. Os preços dos produtos e as regras de promoção no carrinho continuam válidos.
+
+## Endereço e rótulos da finalização
+
+O cliente informa Rua / Avenida e Número separadamente; Número é obrigatório e aceita complementos como 123-B ou S/N. Os dados são validados na API e armazenados no JSON do pedido, sem alterar pedidos históricos. Painel, mensagem WhatsApp e cupom exibem rua e número juntos; registros antigos continuam mostrando o endereço original. Botões: Adicionar ao carrinho, Finalizar Pedido e Concluir pedido.

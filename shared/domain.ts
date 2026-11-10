@@ -35,7 +35,7 @@ export const statusLabels = {
 export type OrderStatus = keyof typeof statusLabels;
 export type Pancake = { filling: string; dough: string; sauce: string; extras: string[]; qty: number };
 export type Cart = { pancakes: Pancake[]; drinks: Record<string, number> };
-export type Customer = { name: string; phone: string; address: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
+export type Customer = { name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
 export type OrderInput = { cart: Cart; customer: Customer };
 export type Receipt = { id: number; label: string; totalCents: number; status: OrderStatus; whatsappUrl: string; createdAt: string };
 export const emptyCart = (): Cart => ({ pancakes: [], drinks: {} });
@@ -92,7 +92,7 @@ export function validateOrder(value: unknown): OrderInput {
   if (c.payment !== 'pix' && c.payment !== 'card') throw new ValidationError('Escolha a forma de pagamento.');
   if (c.privacy !== true) throw new ValidationError('Confirme a leitura do aviso de privacidade.');
   return { cart, customer: { name: text(c.name, 'o nome', 2, 80), phone,
-    address: text(c.address, 'o endereço', 5, 200), neighborhood: text(c.neighborhood, 'o bairro', 2, 80),
+    address: text(c.address, 'a rua', 2, 200), number: text(c.number, 'o número', 1, 20), neighborhood: text(c.neighborhood, 'o bairro', 2, 80),
     reference: text(c.reference, 'a referência', 0, 200), notes: text(c.notes, 'as observações', 0, 500),
     payment: c.payment, privacy: true } };
 }
@@ -107,12 +107,15 @@ export function describe(p: Pancake) {
     details: [(doughs.find(x => x.id === p.dough)?.name ?? (p.dough === 'vermelha' ? 'Vermelha (beterraba — item descontinuado)' : p.dough)), sauces.find(x => x.id === p.sauce)!.name,
       ...p.extras.map(id => extras.find(x => x.id === id)!.name)].join(' · ') };
 }
+export function formatAddress(customer: Pick<Customer, 'address' | 'number'>) {
+  return customer.number ? `${customer.address}, ${customer.number}` : customer.address;
+}
 export function whatsappMessage(id: number, order: OrderInput, createdAt: string, savedTotalCents = totals(order.cart).totalCents) {
   const label = `#${String(id).padStart(5, '0')}`;
   const c = order.customer; const t = totals(order.cart);
   const lines = [`🥞 *PRAZERES DA MASSA — ${label}*`, 'Pedido registrado; aguardando confirmação da loja.',
     new Date(createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone }), '',
-    `Nome: ${c.name}`, `WhatsApp: ${c.phone}`, `Endereço: ${c.address}`, `Bairro: ${c.neighborhood}`, `Cidade: ${SHOP.city}`,
+    `Nome: ${c.name}`, `WhatsApp: ${c.phone}`, `Endereço: ${formatAddress(c)}`, `Bairro: ${c.neighborhood}`, `Cidade: ${SHOP.city}`,
     c.reference ? `Referência: ${c.reference}` : '', '', '*Seu pedido*',
     ...order.cart.pancakes.map(p => `${p.qty}× ${describe(p).name}\n${describe(p).details}`),
     ...drinks.filter(d => order.cart.drinks[d.id]).map(d => `${order.cart.drinks[d.id]}× ${d.name}`), '',
