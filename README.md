@@ -221,3 +221,13 @@ O banco, pedidos existentes, senhas e chave Receber pedidos são preservados na 
 A tag antes-promocao-producao-20261110 preserva o código anterior à promoção. Para reverter, publique a versão correspondente, sem restaurar/apagar o D1. Novos campos opcionais nos pedidos não prejudicam o endereço textual da versão anterior.
 
 O proprietário validou o teste no celular. Verificação desta promoção: build e 19 testes aprovados, incluindo conclusão no painel sem link de envio pelo cliente, coordenadas opcionais, mensagens administrativas, impressão e controle de atendimento. O teste que preservava a conclusão antiga por WhatsApp foi removido porque esse fluxo foi substituído.
+
+## Atualização automática do painel por novos pedidos
+
+Com sessão ativa e aba visível, o painel verifica /api/admin/orders/latest a cada 5 segundos. A resposta autenticada contém somente o identificador mais recente; sem identificador novo, a lista não é recarregada. Um pedido é novo quando o cliente conclui o registro (situação inicial pending), não quando a entrega é concluída. Trocas de status não são tratadas como novos pedidos.
+
+Ao detectar novidades, busca por cursor todos os registros posteriores ao último conhecido, inclusive mais de uma página, e inclui no início sem duplicar ou descartar o histórico já carregado. Filtros são mantidos. Atualizar lista continua recarregando os pedidos recentes e a configuração da loja; a paginação manual permanece disponível. Alterações de status continuam seguindo o fluxo de confirmação existente.
+
+A verificação pausa com aba oculta, em confirmações, na mensagem preparada do WhatsApp, durante alterações e impressão, retomando depois. Não sobrepõe consultas; ignora resultados recebidos durante a pausa. Falhas de rede mantêm os dados visíveis e usam intervalo progressivo até 60 segundos; o botão manual permanece disponível. A sessão expirada interrompe a atualização e pede novo login. Não existe promessa de tempo real instantâneo: em condições normais, a checagem ocorre a cada 5 segundos, mais o tempo de rede.
+
+Validação: 22 testes aprovados, incluindo detecção autenticada de novos identificadores, ausência de dados pessoais na sonda, paginação superior a 50 novidades e preservação/deduplicação de registros. Verificação interativa das pausas e da impressão no navegador do operador ainda precisa ser feita, pois o controle do navegador do ambiente não está disponível. Não há migração de banco ou mudança da chave de atendimento.

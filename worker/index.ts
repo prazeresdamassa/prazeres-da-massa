@@ -104,6 +104,10 @@ async function api(req: Request, env: Env) {
     if (path === '/api/admin/logout' && req.method === 'POST') {
       const res = json({ ok: true }); res.headers.set('Set-Cookie', 'pdm_session=; HttpOnly; Secure; SameSite=Strict; Path=/api/admin; Max-Age=0'); return res;
     }
+    if (path === '/api/admin/orders/latest' && req.method === 'GET') {
+      const row = await env.DB.prepare('SELECT id FROM orders ORDER BY id DESC LIMIT 1').first<{ id: number }>();
+      return json({ latestId: row?.id ?? 0 });
+    }
     if (path === '/api/admin/orders' && req.method === 'GET') {
       const before = Number(url.searchParams.get('before') || Number.MAX_SAFE_INTEGER);
       if (!Number.isSafeInteger(before) || before <= 0) return fail('Página inválida.', 400);

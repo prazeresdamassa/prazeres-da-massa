@@ -7,6 +7,7 @@ import './enhancements.css';
 import { PrintReceipt } from './PrintReceipt';
 import { DeliveryMap } from './DeliveryMap';
 import { OrderSuccess } from './OrderSuccess';
+import { readNewOrders, includeNewOrders } from '../shared/order-refresh';
 import { preparedStatusMessage } from '../shared/customer-messages';
 
 const CART_KEY = 'pdm:cart:v1';
@@ -202,6 +203,16 @@ const nextStates: Record<OrderStatus, OrderStatus[]> = { pending: ['accepted', '
 const statusActions: Record<OrderStatus, string> = { pending: 'Aguardando confirmação', accepted: 'Confirmar', preparing: 'Em preparo', dispatched: 'Saiu para entrega', completed: 'Concluído', cancelled: 'Cancelar pedido' };
 function Admin() {
   const updatingStatus = useRef(false);
+  const latestSeen = useRef(0);
+  const authRevision = useRef(0);
+  const settingsRevision = useRef(0);
+  const loading = useRef<Promise<void> | null>(null);
+  const polling = useRef<Promise<boolean> | null>(null);
+  const autoPaused = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [autoNotice, setAutoNotice] = useState('');
+  const [autoError, setAutoError] = useState('');
+  const [printing, setPrinting] = useState(false);
   const [notification, setNotification] = useState<{ text: string; url: string; id: number } | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]); const [logged, setLogged] = useState(false);
   const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
@@ -211,22 +222,98 @@ function Admin() {
   const [printOrder, setPrintOrder] = useState<AdminOrder | null>(null);
   useEffect(() => {
     if (!printOrder) return;
+    setPrinting(true);
     let active = true; let frame = 0;
-    void document.fonts.ready.then(() => { if (active) frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => { if (active) window.print(); }); }); });
+    void document.fonts.ready.then(() => { if (active) frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => { if (active) { try { window.print(); } catch { setPrinting(false); setError('Não foi possível abrir a impressão.'); } } }); }); });
     return () => { active = false; cancelAnimationFrame(frame); };
   }, [printOrder]);
+  useEffect(() => {
+    const begin = () => setPrinting(true);
+    const end = () => setPrinting(false);
+    window.addEventListener('beforeprint', begin); window.addEventListener('afterprint', end);
+    const media = window.matchMedia('print');
+    const changed = () => setPrinting(media.matches);
+    media.addEventListener('change', changed);
+    return () => { window.removeEventListener('beforeprint', begin); window.removeEventListener('afterprint', end); media.removeEventListener('change', changed); };
+  }, []);
   const [filter, setFilter] = useState('active'); const [before, setBefore] = useState<number | null>(null); const [change, setChange] = useState<{ id: number; from: OrderStatus; to: OrderStatus } | null>(null);
-  async function load(append = false) {
-    try {
-      const data = await request<{ orders: AdminOrder[]; nextBefore: number | null }>(`/api/admin/orders${append && before ? `?before=${before}` : ''}`);
-      const settings = await request<{ acceptingOrders: boolean }>('/api/admin/settings');
-      setAcceptingOrders(settings.acceptingOrders);
-      setOrders(old => append ? [...old, ...data.orders] : data.orders); setBefore(data.nextBefore); setLogged(true); setError('');
-    } catch (err) { if ((err as { status: number }).status === 401) setLogged(false); else setError((err as Error).message); }
+  const paused = busy || savingSetting || !!change || !!notification || printing;
+  autoPaused.current = paused || !logged;
+  async function load(append = false, force = false): Promise<void> {
+    if (polling.current) await polling.current;
+    if (loading.current) { await loading.current; if (append || force) return load(append, force); return; }
+    const revision = authRevision.current;
+    const settingVersion = settingsRevision.current;
+    setRefreshing(true);
+    const task = (async () => {
+      try {
+        const data = await request<{ orders: AdminOrder[]; nextBefore: number | null }>(`/api/admin/orders${append && before ? `?before=${before}` : ''}`);
+        const settings = await request<{ acceptingOrders: boolean }>('/api/admin/settings');
+        if (revision !== authRevision.current) return;
+        if (settingVersion === settingsRevision.current) setAcceptingOrders(settings.acceptingOrders);
+        setOrders(old => append ? includeNewOrders(old, data.orders) : data.orders);
+        latestSeen.current = Math.max(append ? latestSeen.current : 0, data.orders[0]?.id ?? 0);
+        setBefore(data.nextBefore); setLogged(true); setError(''); setAutoError(''); setAutoNotice('');
+      } catch (err) {
+        if (revision !== authRevision.current) return;
+        if ((err as { status: number }).status === 401) { setLogged(false); setOrders([]); setPrintOrder(null); setNotification(null); }
+        else setError((err as Error).message);
+      }
+    })();
+    loading.current = task;
+    try { await task; } finally { if (loading.current === task) loading.current = null; setRefreshing(false); }
   }
+  async function checkForNewOrders(): Promise<boolean> {
+    if (autoPaused.current || document.visibilityState !== 'visible' || loading.current || polling.current) return true;
+    const revision = authRevision.current;
+    const task = (async () => {
+      try {
+        const probe = await request<{ latestId: number }>('/api/admin/orders/latest');
+        if (autoPaused.current || document.visibilityState !== 'visible' || revision !== authRevision.current) return true;
+        if (probe.latestId <= latestSeen.current) { setAutoError(''); return true; }
+        const fresh = await readNewOrders<AdminOrder>(latestSeen.current, beforeId => {
+          if (autoPaused.current || document.visibilityState !== 'visible') throw new Error('Verificação pausada.');
+          return request(`/api/admin/orders${beforeId ? `?before=${beforeId}` : ''}`);
+        });
+        if (autoPaused.current || document.visibilityState !== 'visible' || revision !== authRevision.current) return true;
+        if (fresh.length) {
+          setOrders(previous => includeNewOrders(previous, fresh));
+          latestSeen.current = Math.max(latestSeen.current, fresh[0].id);
+          setAutoNotice(`${fresh.length} ${fresh.length === 1 ? 'novo pedido recebido' : 'novos pedidos recebidos'}.`);
+        }
+        setAutoError(''); return true;
+      } catch (err) {
+        if (revision !== authRevision.current || autoPaused.current || document.visibilityState !== 'visible') return true;
+        if ((err as { status: number }).status === 401) { authRevision.current++; setLogged(false); setOrders([]); setNotification(null); setPrintOrder(null); latestSeen.current = 0; }
+        else setAutoError('Não foi possível verificar novos pedidos. A lista foi mantida; tentaremos novamente. Você também pode usar Atualizar lista.');
+        return false;
+      }
+    })();
+    polling.current = task;
+    try { return await task; } finally { if (polling.current === task) polling.current = null; }
+  }
+  const checkLatest = useRef(checkForNewOrders); checkLatest.current = checkForNewOrders;
+  useEffect(() => {
+    if (!logged || paused) return;
+    let stopped = false; let running = false; let failures = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    async function tick() {
+      if (stopped || running || document.visibilityState !== 'visible') return;
+      running = true;
+      const ok = await checkLatest.current();
+      failures = ok ? 0 : Math.min(failures + 1, 4);
+      running = false;
+      if (!stopped && document.visibilityState === 'visible') timer = setTimeout(tick, failures ? Math.min(60000, 5000 * 2 ** failures) : 5000);
+    }
+    const resume = () => { clearTimeout(timer); if (document.visibilityState === 'visible') void tick(); };
+    if (document.visibilityState === 'visible') timer = setTimeout(tick, 5000);
+    document.addEventListener('visibilitychange', resume); window.addEventListener('online', resume);
+    return () => { stopped = true; clearTimeout(timer); document.removeEventListener('visibilitychange', resume); window.removeEventListener('online', resume); };
+  }, [logged, paused]);
   useEffect(() => { document.title = 'Área da loja | Prazeres da Massa'; void load(); }, []);
   async function toggleOrders() {
     if (acceptingOrders === null || savingSetting) return;
+    settingsRevision.current++;
     setSavingSetting(true); setError(''); setSettingMessage('');
     try {
       const result = await request<{ acceptingOrders: boolean }>('/api/admin/settings', { method: 'PATCH', body: JSON.stringify({ acceptingOrders: !acceptingOrders }) });
@@ -237,7 +324,7 @@ function Admin() {
   }
   async function login(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
-    try { await request('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) }); setPassword(''); await load(); }
+    try { await request('/api/admin/login', { method: 'POST', body: JSON.stringify({ password }) }); setPassword(''); if (loading.current) await loading.current; await load(); }
     catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
   async function update() {
@@ -262,19 +349,20 @@ function Admin() {
         setNotification({ ...prepared, id: selected.id });
         try { if (popup && !popup.closed) popup.location.replace(prepared.url); } catch { popup?.close(); }
       }
-      await load();
+      await load(false, true);
       if (!prepared && selected.to !== 'cancelled') setError('Status atualizado, mas o telefone do cliente não é válido para abrir o WhatsApp.');
     } catch (err) { popup?.close(); setError((err as Error).message); }
     finally { setBusy(false); updatingStatus.current = false; }
   }
   return <><div className="admin-shell"><header className="admin-header"><a className="wordmark" href="/"><ChefHat/><span>Prazeres <i>da Massa</i></span></a><span>Área da loja</span></header>
-    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" onClick={() => void load()}>Atualizar lista</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); setLogged(false); setOrders([]); setNotification(null); } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
+    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" disabled={refreshing || busy || savingSetting || printing} onClick={() => void load()}>{refreshing ? 'Atualizando…' : 'Atualizar lista'}</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); authRevision.current++; setLogged(false); setOrders([]); setNotification(null); setPrintOrder(null); latestSeen.current = 0; } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
       {error && <p className="error" role="alert">{error}</p>}
       <section className="shop-control"><div><h2>Receber pedidos</h2><p>{acceptingOrders ? 'Ligado: clientes podem pedir em qualquer horário.' : 'Desligado: novos pedidos estão pausados.'}</p><small>Controle manual. Os horários do cardápio não ligam ou desligam a loja.</small></div><button type="button" role="switch" aria-checked={acceptingOrders === true} aria-label="Receber pedidos" disabled={savingSetting || acceptingOrders === null} className={`shop-switch ${acceptingOrders ? 'on' : ''}`} onClick={() => void toggleOrders()}><span aria-hidden="true"/>{savingSetting ? 'Salvando…' : acceptingOrders ? 'Ligado' : 'Desligado'}</button></section><p className="hint" role="status">{settingMessage}</p>
+      <div className="refresh-indicator"><span>{paused ? 'Verificação automática pausada durante esta ação.' : 'Verificação de novos pedidos ativa · a cada 5 segundos'}</span><p role="status">{autoNotice}</p>{autoError && <p className="warning" role="status">{autoError}</p>}</div>
       <div className="admin-filters"><button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>Em andamento</button><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos os carregados</button></div>
-      <p className="hint">Atualize a lista para receber novos pedidos. Registros são mantidos por 90 dias. Os dados abaixo são pessoais: use apenas para o atendimento.</p>
-      {orders.filter(o => filter === 'all' || !['completed','cancelled'].includes(o.status)).map(o => <article className="admin-order" key={o.id}><div className="admin-order-heading"><h2>#{String(o.id).padStart(5, '0')} <span>{o.customer.name}</span></h2><span className={`order-status ${o.status}`}>{statusLabels[o.status]}</span></div><p className="hint">{new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone })}</p><div className="admin-order-grid"><div><h3>Entrega</h3><p>{formatAddress(o.customer)}<br/>{o.customer.neighborhood} · {SHOP.city}</p>{o.customer.location && <p><a href={locationUrl(o.customer.location)} target="_blank" rel="noopener noreferrer"><MapPin size={16}/> Abrir ponto de entrega no mapa</a></p>}{o.customer.reference && <p>Referência: {o.customer.reference}</p>}<a href={`https://wa.me/55${o.customer.phone}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/> {o.customer.phone}</a></div><div><h3>Pedido</h3>{o.cart.pancakes.map((p, i) => <p key={i}><strong>{p.qty}× {describe(p).name}</strong><br/>{describe(p).details}</p>)}{drinks.filter(d => o.cart.drinks[d.id]).map(d => <p key={d.id}>{o.cart.drinks[d.id]}× {d.name}</p>)}{o.customer.notes && <p><strong>Observação:</strong> {o.customer.notes}</p>}</div><div><h3>Pagamento</h3><strong className="admin-total">{money(o.totalCents)}</strong><p>{o.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}</p><small>A confirmação de pagamento é manual.</small></div></div><div className="admin-order-buttons"><button type="button" className="outline-button print-button" onClick={() => setPrintOrder({ ...o })}><Printer size={17}/> Imprimir cupom</button>{nextStates[o.status].map(s => <button key={s} className={s === 'cancelled' ? 'text-button danger' : 'primary'} onClick={() => setChange({ id: o.id, from: o.status, to: s })}>{statusActions[s]}</button>)}</div></article>)}
-      {!orders.length && <div className="empty-admin"><ShoppingBag size={32}/><h2>Nenhum pedido registrado.</h2><p>Os pedidos aparecerão aqui durante o atendimento.</p></div>}{before && <button className="outline-button" onClick={() => void load(true)}>Carregar pedidos anteriores</button>}
+      <p className="hint">Novos pedidos são verificados a cada 5 segundos. A lista só muda ao receber novidades; use Atualizar lista para recarregar tudo. Registros são mantidos por 90 dias. Os dados abaixo são pessoais: use apenas para o atendimento.</p>
+      {orders.filter(o => filter === 'all' || !['completed','cancelled'].includes(o.status)).map(o => <article className="admin-order" key={o.id}><div className="admin-order-heading"><h2>#{String(o.id).padStart(5, '0')} <span>{o.customer.name}</span></h2><span className={`order-status ${o.status}`}>{statusLabels[o.status]}</span></div><p className="hint">{new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone })}</p><div className="admin-order-grid"><div><h3>Entrega</h3><p>{formatAddress(o.customer)}<br/>{o.customer.neighborhood} · {SHOP.city}</p>{o.customer.location && <p><a href={locationUrl(o.customer.location)} target="_blank" rel="noopener noreferrer"><MapPin size={16}/> Abrir ponto de entrega no mapa</a></p>}{o.customer.reference && <p>Referência: {o.customer.reference}</p>}<a href={`https://wa.me/55${o.customer.phone}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/> {o.customer.phone}</a></div><div><h3>Pedido</h3>{o.cart.pancakes.map((p, i) => <p key={i}><strong>{p.qty}× {describe(p).name}</strong><br/>{describe(p).details}</p>)}{drinks.filter(d => o.cart.drinks[d.id]).map(d => <p key={d.id}>{o.cart.drinks[d.id]}× {d.name}</p>)}{o.customer.notes && <p><strong>Observação:</strong> {o.customer.notes}</p>}</div><div><h3>Pagamento</h3><strong className="admin-total">{money(o.totalCents)}</strong><p>{o.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}</p><small>A confirmação de pagamento é manual.</small></div></div><div className="admin-order-buttons"><button type="button" className="outline-button print-button" onClick={() => { setPrinting(true); setPrintOrder({ ...o }); }}><Printer size={17}/> Imprimir cupom</button>{nextStates[o.status].map(s => <button key={s} className={s === 'cancelled' ? 'text-button danger' : 'primary'} onClick={() => setChange({ id: o.id, from: o.status, to: s })}>{statusActions[s]}</button>)}</div></article>)}
+      {!orders.length && <div className="empty-admin"><ShoppingBag size={32}/><h2>Nenhum pedido registrado.</h2><p>Os pedidos aparecerão aqui durante o atendimento.</p></div>}{before && <button className="outline-button" disabled={refreshing || busy || savingSetting || printing} onClick={() => void load(true)}>Carregar pedidos anteriores</button>}
       {change && <Modal title="Confirmar atualização" onClose={() => { if (!busy) setChange(null); }}><p>Alterar o pedido #{String(change.id).padStart(5, '0')} para <strong>{statusLabels[change.to]}</strong>?</p><p className="hint">{change.to === 'cancelled' ? 'Confirme o cancelamento deste pedido.' : 'Após salvar, o WhatsApp do cliente será aberto com uma mensagem preparada. Toque em Enviar no WhatsApp para avisar o cliente.'}</p>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy} onClick={() => void update()}>{busy ? 'Salvando…' : change.to === 'cancelled' ? 'Confirmar cancelamento' : 'Salvar e abrir WhatsApp'}</button></Modal>}
       {notification && <Modal title="Status atualizado" onClose={() => setNotification(null)}><p>Pedido #{String(notification.id).padStart(5, '0')}: a mensagem está preparada para o cliente.</p><blockquote className="prepared-message">{notification.text}</blockquote><a className="primary full" href={notification.url} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/> Abrir mensagem no WhatsApp</a><p className="hint">Se o WhatsApp já abriu, toque em Enviar na conversa. Se a abertura foi bloqueada, use o botão acima. O site não confirma o envio da mensagem.</p></Modal>}
     </main>}
