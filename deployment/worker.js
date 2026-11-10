@@ -32,15 +32,6 @@ var drinks = [
   { id: "coca-zero", name: "Coca-Cola zero", cents: 699 }
 ];
 var prices = { pair: 2199, single: 1299 };
-var hours = {
-  0: [18, 22],
-  1: null,
-  2: null,
-  3: [19, 23],
-  4: [18, 22],
-  5: [19, 23],
-  6: [18, 22]
-};
 var statusLabels = {
   pending: "Aguardando confirma\xE7\xE3o",
   accepted: "Confirmado",
@@ -55,19 +46,6 @@ var ValidationError = class extends Error {
     __name(this, "ValidationError");
   }
 };
-function shopStatus(date = /* @__PURE__ */ new Date()) {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: SHOP.timezone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
-  const get = /* @__PURE__ */ __name((type) => parts.find((p) => p.type === type)?.value ?? "", "get");
-  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday"));
-  const schedule = hours[day];
-  const minute = Number(get("hour")) * 60 + Number(get("minute"));
-  return {
-    open: !!schedule && minute >= schedule[0] * 60 && minute < schedule[1] * 60,
-    today: schedule ? `${schedule[0]}h \xE0s ${schedule[1]}h` : "Fechado hoje",
-    timezone: SHOP.timezone
-  };
-}
-__name(shopStatus, "shopStatus");
 function record(v) {
   if (!v || typeof v !== "object" || Array.isArray(v)) throw new ValidationError("Dados do pedido inv\xE1lidos.");
   return v;
@@ -270,7 +248,11 @@ async function api(req, env) {
   const url = new URL(req.url);
   const path = url.pathname;
   if (req.method !== "GET" && req.headers.get("Origin") !== url.origin) return fail("Origem n\xE3o autorizada.", 403);
-  if (path === "/api/status" && req.method === "GET") return json({ ...shopStatus(), open: configured(env) && shopStatus().open, ready: configured(env), ...!configured(env) ? { today: "Estamos preparando o atendimento" } : {}, serverTime: (/* @__PURE__ */ new Date()).toISOString() });
+  if (path === "/api/status" && req.method === "GET") {
+    const setting = await env.DB.prepare("SELECT accepting_orders FROM shop_settings WHERE id = 1").first();
+    const open = configured(env) && setting?.accepting_orders === 1;
+    return json({ open, ready: configured(env), today: open ? "Recebendo pedidos" : "Novos pedidos pausados", serverTime: (/* @__PURE__ */ new Date()).toISOString() });
+  }
   if (path === "/api/orders" && req.method === "POST") {
     if (!configured(env)) return fail("A loja est\xE1 finalizando a configura\xE7\xE3o do atendimento. Tente mais tarde.", 503);
     const key = req.headers.get("Idempotency-Key") ?? "";
@@ -280,10 +262,11 @@ async function api(req, env) {
     const hash = await digest(JSON.stringify(order));
     const existing = await env.DB.prepare("SELECT * FROM orders WHERE request_key = ?").bind(key).first();
     if (existing) return existing.request_hash === hash ? json(receipt(existing)) : fail("Esta tentativa pertence a outro pedido. Atualize os dados para continuar.", 409);
-    if (!shopStatus().open) return fail("Estamos fechados agora. Seu carrinho est\xE1 salvo para o pr\xF3ximo atendimento.", 409);
-    const row = await env.DB.prepare("INSERT INTO orders (request_key, request_hash, customer_json, items_json, total_cents) VALUES (?, ?, ?, ?, ?) ON CONFLICT(request_key) DO NOTHING RETURNING *").bind(key, hash, JSON.stringify(order.customer), JSON.stringify(order.cart), totals(order.cart).totalCents).first();
+    const setting = await env.DB.prepare("SELECT accepting_orders FROM shop_settings WHERE id = 1").first();
+    if (setting?.accepting_orders !== 1) return fail("A loja pausou novos pedidos. Seu carrinho continua salvo.", 409);
+    const row = await env.DB.prepare("INSERT INTO orders (request_key, request_hash, customer_json, items_json, total_cents) SELECT ?, ?, ?, ?, ? FROM shop_settings WHERE id = 1 AND accepting_orders = 1 ON CONFLICT(request_key) DO NOTHING RETURNING *").bind(key, hash, JSON.stringify(order.customer), JSON.stringify(order.cart), totals(order.cart).totalCents).first();
     const saved = row ?? await env.DB.prepare("SELECT * FROM orders WHERE request_key = ?").bind(key).first();
-    if (!saved) return fail("N\xE3o foi poss\xEDvel registrar o pedido. Tente novamente.", 503);
+    if (!saved) return fail("A loja pausou novos pedidos. Seu carrinho continua salvo.", 409);
     if (saved.request_hash !== hash) return fail("Tentativa conflitante. Revise seu pedido.", 409);
     return json(receipt(saved), row ? 201 : 200);
   }
@@ -299,6 +282,16 @@ async function api(req, env) {
   }
   if (path.startsWith("/api/admin/")) {
     if (!await authorized(req, env)) return fail("Fa\xE7a login para continuar.", 401);
+    if (path === "/api/admin/settings" && req.method === "GET") {
+      const row = await env.DB.prepare("SELECT accepting_orders FROM shop_settings WHERE id = 1").first();
+      return json({ acceptingOrders: row?.accepting_orders === 1 });
+    }
+    if (path === "/api/admin/settings" && req.method === "PATCH") {
+      const body = await readBody(req);
+      if (typeof body?.acceptingOrders !== "boolean") return fail("Informe se deseja receber pedidos.", 400);
+      await env.DB.prepare("UPDATE shop_settings SET accepting_orders = ? WHERE id = 1").bind(body.acceptingOrders ? 1 : 0).run();
+      return json({ acceptingOrders: body.acceptingOrders });
+    }
     if (path === "/api/admin/logout" && req.method === "POST") {
       const res = json({ ok: true });
       res.headers.set("Set-Cookie", "pdm_session=; HttpOnly; Secure; SameSite=Strict; Path=/api/admin; Max-Age=0");

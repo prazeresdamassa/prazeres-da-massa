@@ -1,1 +1,1 @@
-Pacote Cloudflare. Fonte: feat/cardapio-cloudflare a5ef314. Logo enviada pelo proprietario, Inter, banner sem preco e lixeira de bebidas. Sem segredos.
+Fonte feat/cardapio-cloudflare 8377997. Controle manual de atendimento. Migracao 0002 aplicada. Sem segredos.
