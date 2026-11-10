@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare 15847f7. Resumo na confirmacao preparada WhatsApp. Sem segredos.
+Producao aprovada: fonte main. Mapa e conclusao no painel como padrao. Sem parametros de teste. Sem segredos.
