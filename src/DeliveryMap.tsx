@@ -11,7 +11,6 @@ export function DeliveryMap({ value, onChange, onSelectionChange }: { value?: De
   const [ready, setReady] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const change = useRef(onChange); change.current = onChange;
   const selection = useRef(onSelectionChange); selection.current = onSelectionChange;
   const gpsAttempt = useRef(0);
@@ -52,7 +51,7 @@ export function DeliveryMap({ value, onChange, onSelectionChange }: { value?: De
   function toggle(checked: boolean) {
     gpsAttempt.current++;
     selectedRef.current = checked; setSelected(checked); selection.current(checked);
-    setError(''); setNotice(''); setWaiting(false);
+    setError(''); setWaiting(false);
     if (!checked) { change.current(undefined); return; }
     if (draftRef.current) { change.current(draftRef.current); return; }
     if (!navigator.geolocation) { setError('GPS indisponível. Marque o local de entrega no mapa ou desmarque a caixa para continuar sem localização.'); return; }
@@ -62,7 +61,6 @@ export function DeliveryMap({ value, onChange, onSelectionChange }: { value?: De
       if (!map.current || !selectedRef.current || gpsAttempt.current !== attempt) return;
       const point = { latitude: position.coords.latitude, longitude: position.coords.longitude };
       pick.current(point, true); map.current.setView([point.latitude, point.longitude], 17); setWaiting(false);
-      setNotice(`GPS aproximado (precisão de ${Math.round(position.coords.accuracy)} m). Ajuste o marcador se necessário.`);
     }, () => {
       if (!map.current || !selectedRef.current || gpsAttempt.current !== attempt) return;
       setWaiting(false); setError('Não foi possível obter o GPS. Marque o local no mapa ou desmarque a caixa para concluir sem localização.');
@@ -71,14 +69,12 @@ export function DeliveryMap({ value, onChange, onSelectionChange }: { value?: De
   return <section className="delivery-location" aria-label="Localização de entrega opcional">
     <h3>Marque seu local de entrega</h3>
     <p>Clique no mapa ou arraste o marcador até o local correto. Marque <strong>Usar minha localização</strong> para incluir o ponto no pedido; desmarque para não enviá-lo. Rua e número continuam obrigatórios.</p>
-    <div ref={container} className="delivery-map" tabIndex={0} aria-label="Mapa: use as setas para mover e o botão para marcar o centro"/>
+    <div ref={container} className="delivery-map" tabIndex={0} aria-label="Mapa: use as setas para mover e Enter para marcar o local" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const center = map.current?.getCenter(); if (center) pick.current({ latitude: center.lat, longitude: center.lng }); } }}/>
     <label className="location-checkbox"><input type="checkbox" checked={selected} disabled={!ready && !selected} onChange={e => toggle(e.target.checked)}/><span>Usar minha localização</span></label>
-    <p className="hint">Se ainda não marcou um ponto, selecionar a caixa solicita a permissão do GPS. O mapa é fornecido pelo OpenStreetMap.</p>
-    <button type="button" className="outline-button" disabled={!ready} onClick={() => { const center = map.current?.getCenter(); if (center) pick.current({ latitude: center.lat, longitude: center.lng }); }}>Marcar centro do mapa</button>
+    <p className="hint">Ao marcar a caixa “Usar minha localização”, dê permissão para usar o GPS do celular. Ajuste o marcador se necessário.</p>
     {waiting && <p className="hint" role="status">Buscando sua localização… Você também pode marcar o ponto manualmente.</p>}
-    {notice && <p className="hint" role="status">{notice}</p>}
     {draft && <p className="hint">Ponto marcado: {draft.latitude.toFixed(6)}, {draft.longitude.toFixed(6)}</p>}
-    <p className="map-confirmed" role="status">{selected ? value ? 'Este ponto será incluído ao concluir o pedido.' : 'Marque um ponto ou aguarde o GPS. A caixa também pode ser desmarcada.' : 'A localização não será enviada. O pedido seguirá com o endereço escrito.'}</p>
+    <p className={`map-confirmed ${selected && value ? 'is-included' : ''}`} role="status">{selected ? value ? 'Este ponto será incluído ao concluir o pedido.' : 'Marque um ponto ou aguarde o GPS. A caixa também pode ser desmarcada.' : 'A localização não será enviada. O pedido seguirá com o endereço escrito.'}</p>
     {error && <p className="warning" role="status">{error}</p>}
   </section>;
 }
