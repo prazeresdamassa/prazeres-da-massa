@@ -201,3 +201,7 @@ Logo recebida pelo GitHub em `public/logo-nova.png`. O banner exibe a arte intei
 ## Endereço e rótulos da finalização
 
 O cliente informa Rua / Avenida e Número separadamente; Número é obrigatório e aceita complementos como 123-B ou S/N. Os dados são validados na API e armazenados no JSON do pedido, sem alterar pedidos históricos. Painel, mensagem WhatsApp e cupom exibem rua e número juntos; registros antigos continuam mostrando o endereço original. Botões: Adicionar ao carrinho, Finalizar Pedido e Concluir pedido.
+
+## Mensagens preparadas de atualização
+
+Ao avançar o pedido pelos botões Confirmar, Em preparo, Saiu para entrega e Concluído, a confirmação oferece **Salvar e abrir WhatsApp**. O status é salvo primeiro. Depois o WhatsApp do cliente recebe o texto preparado com nome, número do pedido e etapa. A equipe precisa tocar em Enviar. O site não afirma que a mensagem foi enviada ou entregue. Se a abertura for bloqueada, um link permanece disponível para abrir manualmente. Se a alteração falhar, a aba de espera é fechada e o WhatsApp não abre. Cancelamento não possui mensagem automática preparada. Não há integração com API paga ou envio em segundo plano.

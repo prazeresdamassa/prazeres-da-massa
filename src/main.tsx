@@ -5,6 +5,7 @@ import { SHOP, formatAddress, fillings, doughs, sauces, extras, drinks, emptyCar
 import './styles.css';
 import './enhancements.css';
 import { PrintReceipt } from './PrintReceipt';
+import { preparedStatusMessage } from '../shared/customer-messages';
 
 const CART_KEY = 'pdm:cart:v1';
 const ATTEMPT_KEY = 'pdm:attempt:v1';
@@ -193,7 +194,10 @@ function Privacy() {
 
 type AdminOrder = { id: number; createdAt: string; status: OrderStatus; customer: Customer; cart: Cart; totalCents: number };
 const nextStates: Record<OrderStatus, OrderStatus[]> = { pending: ['accepted', 'cancelled'], accepted: ['preparing', 'cancelled'], preparing: ['dispatched', 'cancelled'], dispatched: ['completed', 'cancelled'], completed: [], cancelled: [] };
+const statusActions: Record<OrderStatus, string> = { pending: 'Aguardando confirmação', accepted: 'Confirmar', preparing: 'Em preparo', dispatched: 'Saiu para entrega', completed: 'Concluído', cancelled: 'Cancelar pedido' };
 function Admin() {
+  const updatingStatus = useRef(false);
+  const [notification, setNotification] = useState<{ text: string; url: string; id: number } | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]); const [logged, setLogged] = useState(false);
   const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [acceptingOrders, setAcceptingOrders] = useState<boolean | null>(null);
@@ -232,19 +236,42 @@ function Admin() {
     catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
   async function update() {
-    if (!change) return; setBusy(true); setError('');
-    try { await request(`/api/admin/orders/${change.id}`, { method: 'PATCH', body: JSON.stringify({ status: change.to, previousStatus: change.from }) }); setChange(null); await load(); }
-    catch (err) { setError((err as Error).message); } finally { setBusy(false); }
+    if (!change || updatingStatus.current) return;
+    const selected = change;
+    const order = orders.find(o => o.id === selected.id);
+    if (!order) { setError('Atualize a lista de pedidos antes de continuar.'); return; }
+    const prepared = preparedStatusMessage(order, selected.to);
+    updatingStatus.current = true; setBusy(true); setError(''); setNotification(null);
+    let popup: Window | null = null;
+    // A aba é reservada durante o clique para evitar o bloqueio após a chamada de rede.
+    if (prepared) {
+      try {
+        popup = window.open('about:blank', '_blank');
+        if (popup) { popup.opener = null; popup.document.title = 'Atualizando pedido'; popup.document.body.textContent = 'Atualizando pedido. Aguarde para abrir a mensagem no WhatsApp…'; }
+      } catch { popup?.close(); popup = null; }
+    }
+    try {
+      await request(`/api/admin/orders/${selected.id}`, { method: 'PATCH', body: JSON.stringify({ status: selected.to, previousStatus: selected.from }) });
+      setChange(null);
+      if (prepared) {
+        setNotification({ ...prepared, id: selected.id });
+        try { if (popup && !popup.closed) popup.location.replace(prepared.url); } catch { popup?.close(); }
+      }
+      await load();
+      if (!prepared && selected.to !== 'cancelled') setError('Status atualizado, mas o telefone do cliente não é válido para abrir o WhatsApp.');
+    } catch (err) { popup?.close(); setError((err as Error).message); }
+    finally { setBusy(false); updatingStatus.current = false; }
   }
   return <><div className="admin-shell"><header className="admin-header"><a className="wordmark" href="/"><ChefHat/><span>Prazeres <i>da Massa</i></span></a><span>Área da loja</span></header>
-    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" onClick={() => void load()}>Atualizar lista</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); setLogged(false); setOrders([]); } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
+    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" onClick={() => void load()}>Atualizar lista</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); setLogged(false); setOrders([]); setNotification(null); } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
       {error && <p className="error" role="alert">{error}</p>}
       <section className="shop-control"><div><h2>Receber pedidos</h2><p>{acceptingOrders ? 'Ligado: clientes podem pedir em qualquer horário.' : 'Desligado: novos pedidos estão pausados.'}</p><small>Controle manual. Os horários do cardápio não ligam ou desligam a loja.</small></div><button type="button" role="switch" aria-checked={acceptingOrders === true} aria-label="Receber pedidos" disabled={savingSetting || acceptingOrders === null} className={`shop-switch ${acceptingOrders ? 'on' : ''}`} onClick={() => void toggleOrders()}><span aria-hidden="true"/>{savingSetting ? 'Salvando…' : acceptingOrders ? 'Ligado' : 'Desligado'}</button></section><p className="hint" role="status">{settingMessage}</p>
       <div className="admin-filters"><button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>Em andamento</button><button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Todos os carregados</button></div>
       <p className="hint">Atualize a lista para receber novos pedidos. Registros são mantidos por 90 dias. Os dados abaixo são pessoais: use apenas para o atendimento.</p>
-      {orders.filter(o => filter === 'all' || !['completed','cancelled'].includes(o.status)).map(o => <article className="admin-order" key={o.id}><div className="admin-order-heading"><h2>#{String(o.id).padStart(5, '0')} <span>{o.customer.name}</span></h2><span className={`order-status ${o.status}`}>{statusLabels[o.status]}</span></div><p className="hint">{new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone })}</p><div className="admin-order-grid"><div><h3>Entrega</h3><p>{formatAddress(o.customer)}<br/>{o.customer.neighborhood} · {SHOP.city}</p>{o.customer.reference && <p>Referência: {o.customer.reference}</p>}<a href={`https://wa.me/55${o.customer.phone}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/> {o.customer.phone}</a></div><div><h3>Pedido</h3>{o.cart.pancakes.map((p, i) => <p key={i}><strong>{p.qty}× {describe(p).name}</strong><br/>{describe(p).details}</p>)}{drinks.filter(d => o.cart.drinks[d.id]).map(d => <p key={d.id}>{o.cart.drinks[d.id]}× {d.name}</p>)}{o.customer.notes && <p><strong>Observação:</strong> {o.customer.notes}</p>}</div><div><h3>Pagamento</h3><strong className="admin-total">{money(o.totalCents)}</strong><p>{o.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}</p><small>A confirmação de pagamento é manual.</small></div></div><div className="admin-order-buttons"><button type="button" className="outline-button print-button" onClick={() => setPrintOrder({ ...o })}><Printer size={17}/> Imprimir cupom</button>{nextStates[o.status].map(s => <button key={s} className={s === 'cancelled' ? 'text-button danger' : 'primary'} onClick={() => setChange({ id: o.id, from: o.status, to: s })}>{s === 'cancelled' ? 'Cancelar pedido' : statusLabels[s]}</button>)}</div></article>)}
+      {orders.filter(o => filter === 'all' || !['completed','cancelled'].includes(o.status)).map(o => <article className="admin-order" key={o.id}><div className="admin-order-heading"><h2>#{String(o.id).padStart(5, '0')} <span>{o.customer.name}</span></h2><span className={`order-status ${o.status}`}>{statusLabels[o.status]}</span></div><p className="hint">{new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone })}</p><div className="admin-order-grid"><div><h3>Entrega</h3><p>{formatAddress(o.customer)}<br/>{o.customer.neighborhood} · {SHOP.city}</p>{o.customer.reference && <p>Referência: {o.customer.reference}</p>}<a href={`https://wa.me/55${o.customer.phone}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={14}/> {o.customer.phone}</a></div><div><h3>Pedido</h3>{o.cart.pancakes.map((p, i) => <p key={i}><strong>{p.qty}× {describe(p).name}</strong><br/>{describe(p).details}</p>)}{drinks.filter(d => o.cart.drinks[d.id]).map(d => <p key={d.id}>{o.cart.drinks[d.id]}× {d.name}</p>)}{o.customer.notes && <p><strong>Observação:</strong> {o.customer.notes}</p>}</div><div><h3>Pagamento</h3><strong className="admin-total">{money(o.totalCents)}</strong><p>{o.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}</p><small>A confirmação de pagamento é manual.</small></div></div><div className="admin-order-buttons"><button type="button" className="outline-button print-button" onClick={() => setPrintOrder({ ...o })}><Printer size={17}/> Imprimir cupom</button>{nextStates[o.status].map(s => <button key={s} className={s === 'cancelled' ? 'text-button danger' : 'primary'} onClick={() => setChange({ id: o.id, from: o.status, to: s })}>{statusActions[s]}</button>)}</div></article>)}
       {!orders.length && <div className="empty-admin"><ShoppingBag size={32}/><h2>Nenhum pedido registrado.</h2><p>Os pedidos aparecerão aqui durante o atendimento.</p></div>}{before && <button className="outline-button" onClick={() => void load(true)}>Carregar pedidos anteriores</button>}
-      {change && <Modal title="Confirmar atualização" onClose={() => { if (!busy) setChange(null); }}><p>Alterar o pedido #{String(change.id).padStart(5, '0')} para <strong>{statusLabels[change.to]}</strong>?</p><p className="hint">Avise o cliente pelo WhatsApp. Esta ação não envia mensagens automaticamente.</p><button className="primary full" disabled={busy} onClick={() => void update()}>{busy ? 'Salvando…' : 'Confirmar alteração'}</button></Modal>}
+      {change && <Modal title="Confirmar atualização" onClose={() => { if (!busy) setChange(null); }}><p>Alterar o pedido #{String(change.id).padStart(5, '0')} para <strong>{statusLabels[change.to]}</strong>?</p><p className="hint">{change.to === 'cancelled' ? 'Confirme o cancelamento deste pedido.' : 'Após salvar, o WhatsApp do cliente será aberto com uma mensagem preparada. Toque em Enviar no WhatsApp para avisar o cliente.'}</p>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy} onClick={() => void update()}>{busy ? 'Salvando…' : change.to === 'cancelled' ? 'Confirmar cancelamento' : 'Salvar e abrir WhatsApp'}</button></Modal>}
+      {notification && <Modal title="Status atualizado" onClose={() => setNotification(null)}><p>Pedido #{String(notification.id).padStart(5, '0')}: a mensagem está preparada para o cliente.</p><blockquote className="prepared-message">{notification.text}</blockquote><a className="primary full" href={notification.url} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/> Abrir mensagem no WhatsApp</a><p className="hint">Se o WhatsApp já abriu, toque em Enviar na conversa. Se a abertura foi bloqueada, use o botão acima. O site não confirma o envio da mensagem.</p></Modal>}
     </main>}
   </div>{logged && printOrder && <PrintReceipt order={printOrder}/>}</>;
 }
