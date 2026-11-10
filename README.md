@@ -223,3 +223,7 @@ Validação: build e 17 testes aprovados. O teste adicional verifica coordenadas
 ### Conclusão do pedido no teste
 
 No link ?teste=mapa, Concluir pedido grava normalmente no painel e mostra o número/total com a mensagem de aguardar confirmação da loja pelo WhatsApp, sem botão para o cliente enviar o pedido. O endereço normal sem query preserva o fluxo anterior. Se a caixa estiver marcada sem um ponto válido, o formulário pede para marcar um local ou desmarcar antes de concluir. O teste continua compartilhando os dados e o atendimento reais da loja.
+
+### Resumo na confirmação ao cliente
+
+Somente Confirmar inclui resumo completo na mensagem preparada: panquecas e combinações, quantidades, bebidas, total gravado no pedido (sem recalcular preços históricos), forma de pagamento, endereço/número/bairro, referência, observações e ponto de entrega quando informado. Em preparo, Saiu para entrega e Concluído mantêm mensagens curtas. A mensagem continua sendo aberta após salvar o status e exige tocar em Enviar no WhatsApp.
