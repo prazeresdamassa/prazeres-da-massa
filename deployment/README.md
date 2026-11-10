@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare ad4d896. Mapa direto, checkbox de envio e conclusao no painel. Apenas teste ?teste=mapa. Sem segredos.
+Fonte feat/cardapio-cloudflare 902e221. Mensagem: Seu pedido foi concluido e recebido! Apenas teste. Sem segredos.
