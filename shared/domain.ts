@@ -35,7 +35,8 @@ export const statusLabels = {
 export type OrderStatus = keyof typeof statusLabels;
 export type Pancake = { filling: string; dough: string; sauce: string; extras: string[]; qty: number };
 export type Cart = { pancakes: Pancake[]; drinks: Record<string, number> };
-export type Customer = { name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
+export type DeliveryLocation = { latitude: number; longitude: number };
+export type Customer = { location?: DeliveryLocation; name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
 export type OrderInput = { cart: Cart; customer: Customer };
 export type Receipt = { id: number; label: string; totalCents: number; status: OrderStatus; whatsappUrl: string; createdAt: string };
 export const emptyCart = (): Cart => ({ pancakes: [], drinks: {} });
@@ -84,6 +85,15 @@ export function validateCart(value: unknown): Cart {
   for (const [key, qty] of Object.entries(quantities)) result[option(key, drinks)] = quantity(qty);
   return { pancakes, drinks: result };
 }
+export function validateLocation(value: unknown): DeliveryLocation | undefined {
+  if (value === undefined || value === null) return undefined;
+  const p = record(value);
+  if (typeof p.latitude !== 'number' || typeof p.longitude !== 'number' || !Number.isFinite(p.latitude) || !Number.isFinite(p.longitude) || p.latitude < -90 || p.latitude > 90 || p.longitude < -180 || p.longitude > 180) throw new ValidationError('Ponto de entrega inválido. Marque novamente ou remova a localização.');
+  return { latitude: Number(p.latitude.toFixed(6)), longitude: Number(p.longitude.toFixed(6)) };
+}
+export function locationUrl(location: DeliveryLocation) {
+  return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+}
 export function validateOrder(value: unknown): OrderInput {
   const v = record(value); const cart = validateCart(v.cart); const c = record(v.customer);
   if (!cart.pancakes.length) throw new ValidationError('Adicione pelo menos uma panqueca.');
@@ -91,7 +101,7 @@ export function validateOrder(value: unknown): OrderInput {
   if (!/^\d{10,11}$/.test(phone)) throw new ValidationError('Informe seu WhatsApp com DDD (10 ou 11 dígitos).');
   if (c.payment !== 'pix' && c.payment !== 'card') throw new ValidationError('Escolha a forma de pagamento.');
   if (c.privacy !== true) throw new ValidationError('Confirme a leitura do aviso de privacidade.');
-  return { cart, customer: { name: text(c.name, 'o nome', 2, 80), phone,
+  return { cart, customer: { ...(c.location != null ? { location: validateLocation(c.location) } : {}), name: text(c.name, 'o nome', 2, 80), phone,
     address: text(c.address, 'a rua', 2, 200), number: text(c.number, 'o número', 1, 20), neighborhood: text(c.neighborhood, 'o bairro', 2, 80),
     reference: text(c.reference, 'a referência', 0, 200), notes: text(c.notes, 'as observações', 0, 500),
     payment: c.payment, privacy: true } };
@@ -115,7 +125,7 @@ export function whatsappMessage(id: number, order: OrderInput, createdAt: string
   const c = order.customer; const t = totals(order.cart);
   const lines = [`🥞 *PRAZERES DA MASSA — ${label}*`, 'Pedido registrado; aguardando confirmação da loja.',
     new Date(createdAt).toLocaleString('pt-BR', { timeZone: SHOP.timezone }), '',
-    `Nome: ${c.name}`, `WhatsApp: ${c.phone}`, `Endereço: ${formatAddress(c)}`, `Bairro: ${c.neighborhood}`, `Cidade: ${SHOP.city}`,
+    `Nome: ${c.name}`, `WhatsApp: ${c.phone}`, `Endereço: ${formatAddress(c)}`, `Bairro: ${c.neighborhood}`, `Cidade: ${SHOP.city}`, c.location ? `Ponto de entrega: ${locationUrl(c.location)}` : '',
     c.reference ? `Referência: ${c.reference}` : '', '', '*Seu pedido*',
     ...order.cart.pancakes.map(p => `${p.qty}× ${describe(p).name}\n${describe(p).details}`),
     ...drinks.filter(d => order.cart.drinks[d.id]).map(d => `${order.cart.drinks[d.id]}× ${d.name}`), '',

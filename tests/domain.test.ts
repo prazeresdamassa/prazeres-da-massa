@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shopStatus, totals, validateCart, validateOrder, whatsappMessage, type OrderInput } from '../shared/domain';
+import { shopStatus, validateLocation, totals, validateCart, validateOrder, whatsappMessage, type OrderInput } from '../shared/domain';
 const cart = { pancakes: [{ filling: 'frango', dough: 'tradicional', sauce: 'tomate', extras: ['queijo'], qty: 3 }], drinks: { coca: 1, 'coca-zero': 1 } };
 export const valid: OrderInput = { cart, customer: { name: 'Cliente Teste', phone: '(98) 99999-9999', address: 'Rua de Teste', number: '10', neighborhood: 'Centro', reference: '', notes: '', payment: 'pix', privacy: true } };
 test('promoção combina sabores e usa centavos inteiros', () => {
@@ -46,4 +46,14 @@ test('número é obrigatório para novos pedidos e aparece na mensagem', () => {
   const order = validateOrder({ ...valid, customer: { ...valid.customer, number: '123-B' } });
   assert.match(decodeURIComponent(whatsappMessage(1, order, '2026-11-12T22:00:00Z')), /Rua de Teste, 123-B/);
   assert.equal(validateOrder({ ...valid, customer: { ...valid.customer, number: 'S\/N' } }).customer.number, 'S/N');
+});
+
+test('localização opcional é validada e incluída no WhatsApp sem afetar o endereço', () => {
+  const plain = validateOrder(valid);
+  assert.equal(plain.customer.location, undefined);
+  const mapped = validateOrder({ ...valid, customer: { ...valid.customer, location: { latitude: -3.73831234, longitude: -43.35361234 } } });
+  assert.deepEqual(mapped.customer.location, { latitude: -3.738312, longitude: -43.353612 });
+  assert.match(decodeURIComponent(whatsappMessage(42, mapped, '2026-11-12T22:00:00Z')), /https:\/\/www.google.com\/maps\?q=-3.738312,-43.353612/);
+  assert.equal(mapped.customer.address, plain.customer.address);
+  for (const invalid of [{ latitude: 91, longitude: 0 }, { latitude: 0, longitude: -181 }, { latitude: '1', longitude: 1 }, { latitude: NaN, longitude: 1 }, { latitude: 1, longitude: Infinity }]) assert.throws(() => validateLocation(invalid));
 });

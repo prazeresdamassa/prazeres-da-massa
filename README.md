@@ -205,3 +205,17 @@ O cliente informa Rua / Avenida e Número separadamente; Número é obrigatório
 ## Mensagens preparadas de atualização
 
 Ao avançar o pedido pelos botões Confirmar, Em preparo, Saiu para entrega e Concluído, a confirmação oferece **Salvar e abrir WhatsApp**. O status é salvo primeiro. Depois o WhatsApp do cliente recebe o texto preparado com nome, número do pedido e etapa. A equipe precisa tocar em Enviar. O site não afirma que a mensagem foi enviada ou entregue. Se a abertura for bloqueada, um link permanece disponível para abrir manualmente. Se a alteração falhar, a aba de espera é fechada e o WhatsApp não abre. Cancelamento não possui mensagem automática preparada. Não há integração com API paga ou envio em segundo plano.
+
+## Teste opcional de localização
+
+Use https://prazeres-da-massa.prazeresdamassa.workers.dev/?teste=mapa para o teste. O endereço sem query continua com o formulário sem mapa. O teste é público e usa o MESMO banco e a MESMA chave de atendimento: pedidos de teste aparecem no painel normal e devem conter “TESTE — NÃO PREPARAR”. Não há ambiente de dados isolado.
+
+Na tela de entrega, Abrir mapa opcional ativa Leaflet/OpenStreetMap. O GPS só é solicitado ao clicar Usar minha localização, mediante permissão do navegador; se negado, selecione manualmente. Clique, arraste o marcador ou marque o centro usando o teclado e confirme o ponto antes de concluir. Mover o ponto remove a confirmação anterior, evitando enviar uma localização antiga sem querer. O mapa é opcional, e rua/número/bairro continuam obrigatórios. Não há geocodificação, roteamento, rastreamento ou validação automática da cobertura.
+
+As coordenadas são validadas no servidor, guardadas no JSON do pedido e expostas apenas ao painel autenticado e à mensagem WhatsApp do pedido. Pedidos antigos continuam funcionando e sem coordenadas. Os dados seguem a retenção de 90 dias; localização não é salva no localStorage. No painel, Abrir ponto de entrega no mapa usa Google Maps.
+
+Tiles: https://tile.openstreetmap.org/{z}/{x}/{y}.png, atribuição visível, HTTPS, referer de origem, cache normal do navegador, sem prefetch/offline. O serviço tem uso comunitário limitado e não garante disponibilidade: https://operations.osmfoundation.org/policies/tiles/. Em uso elevado, contratar provedor de tiles ou infraestrutura própria. O teste não realiza chamadas pagas nem exige chave de API.
+
+Para voltar ao fluxo sem mapa, abra o endereço normal ou clique no link da faixa de teste. Para reverter o código, a tag `antes-do-teste-mapa-20261110` preserva a versão anterior; não restaure/apague o banco. As novas coordenadas em pedidos existentes podem continuar armazenadas até a expiração normal, sem afetar o endereço textual.
+
+Validação: build e 17 testes aprovados. O teste adicional verifica coordenadas, arredondamento, rejeição de limites inválidos e inclusão da localização no WhatsApp. GPS e interação real em celular ainda precisam de conferência; o controle de navegador do ambiente não está disponível.
