@@ -1,1 +1,1 @@
-Pacote de publicacao Cloudflare. Fonte: feat/cardapio-cloudflare, commit a683977. Inclui menus, legibilidade e impressao 102x152mm. Nao contem segredos.
+Pacote Cloudflare. Fonte: feat/cardapio-cloudflare de53d68. Confirma inclusao e separa selecao de bebidas da adicao ao carrinho. Sem segredos.
