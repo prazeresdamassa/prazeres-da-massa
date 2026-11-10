@@ -2,6 +2,27 @@
 
 Cardápio responsivo com React 19 + TypeScript, API em Cloudflare Workers e banco SQLite/D1. Preparado para um repositório privado no GitHub e para o plano gratuito da Cloudflare, dentro dos limites do plano. Não depende de Vercel, CounterAPI ou serviços de fontes externos em tempo de execução.
 
+## Implantação desta loja
+
+- Site publicado: https://prazeres-da-massa.prazeresdamassa.workers.dev
+- Painel: https://prazeres-da-massa.prazeresdamassa.workers.dev/admin
+- O Worker, o banco D1 e a limpeza diária já estão provisionados na conta Cloudflare da loja. Não recrie esses recursos para esta implantação.
+- O segredo `SESSION_SECRET` já foi gerado e armazenado na Cloudflare, sem inclusão no código ou no GitHub.
+- **Falta configurar `ADMIN_PASSWORD`.** No painel Cloudflare, abra Workers & Pages → prazeres-da-massa → Settings → Variables and Secrets → Add. Escolha o tipo Secret, nome `ADMIN_PASSWORD`, defina uma senha exclusiva de pelo menos 16 caracteres e salve/publice. Não compartilhe a senha pelo chat.
+- Até essa configuração, a API bloqueia novos pedidos. Depois, o atendimento segue os horários da loja automaticamente.
+- Esta publicação foi feita diretamente pela API, a partir do pacote versionado na branch `deploy/cloudflare` (commit `40b69451653e7694c46b6cf3526194f92ff85489`). A branch `feat/cardapio-cloudflare` contém as fontes. A publicação automática a partir do GitHub ainda não foi conectada.
+- Site, painel e arquivos estáticos responderam aos testes HTTP. A API administrativa rejeitou acesso sem login, e o endpoint de pedidos recusou registros antes da definição da senha. Ainda é necessária a conferência visual em um navegador e um teste operacional após a configuração da senha.
+
+Os passos de criação de recursos abaixo servem para uma nova instalação em outra conta. Para esta loja, use os recursos já existentes e a configuração de `wrangler.jsonc`.
+
+## Menus, leitura e impressão de pedidos
+
+O cardápio possui categorias Panquecas, Massas e Bebidas. A categoria Massas aguarda cadastro de pratos e preços; a mensagem de disponibilidade futura não aceita pedidos. Panquecas têm apenas massa tradicional e verde. Pedidos históricos com massa de beterraba continuam legíveis, mas a API não aceita novos pedidos dessa opção. Itens de beterraba de carrinhos salvos são removidos, preservando os outros itens válidos.
+
+A interface e o painel usam Arial/Helvetica, com textos ampliados e mais contraste. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
+
+Para a Epson L355, selecione a impressora no diálogo do navegador, papel personalizado **102 × 152 mm**, orientação retrato, escala **100%** e desative cabeçalhos/rodapés do navegador. O CSS reserva 5 mm de margem por lado. Se o driver oferecer somente 10 × 15 cm (100 × 150 mm), crie o formato personalizado para corresponder à folha real. O site solicita o tamanho; o formato final e o alinhamento dependem do driver e do carregamento correto do papel. Pedidos extensos continuam em outras folhas, sem cortar o conteúdo. Faça a primeira impressão de conferência antes do uso diário. Não há impressão silenciosa ou acesso direto à impressora.
+
 ## O que está pronto
 
 - Identidade visual em creme, marrom e terracota; marca original preservada.

@@ -10,7 +10,6 @@ export const fillings = [
 export const doughs = [
   { id: 'tradicional', name: 'Tradicional', description: 'Leve e douradinha', icon: '🥞' },
   { id: 'verde', name: 'Verde', description: 'Com couve-folha', icon: '🌿' },
-  { id: 'vermelha', name: 'Vermelha', description: 'Com beterraba', icon: '♥' },
 ] as const;
 export const sauces = [
   { id: 'tomate', name: 'Tomate especial', description: 'Artesanal e temperado', icon: '🍅' },
@@ -105,7 +104,7 @@ export function totals(cart: Cart) {
 }
 export function describe(p: Pancake) {
   return { name: fillings.find(x => x.id === p.filling)!.name,
-    details: [doughs.find(x => x.id === p.dough)!.name, sauces.find(x => x.id === p.sauce)!.name,
+    details: [(doughs.find(x => x.id === p.dough)?.name ?? (p.dough === 'vermelha' ? 'Vermelha (beterraba — item descontinuado)' : p.dough)), sauces.find(x => x.id === p.sauce)!.name,
       ...p.extras.map(id => extras.find(x => x.id === id)!.name)].join(' · ') };
 }
 export function whatsappMessage(id: number, order: OrderInput, createdAt: string, savedTotalCents = totals(order.cart).totalCents) {
