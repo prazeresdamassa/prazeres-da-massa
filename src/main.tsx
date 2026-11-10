@@ -58,7 +58,6 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   </div>;
 }
 function App() {
-  const mapTest = new URLSearchParams(location.search).get('teste') === 'mapa';
   const [mapLocationRequired, setMapLocationRequired] = useState(false);
   const [cart, setCart] = useState<Cart>(readCart);
   const [addedItem, setAddedItem] = useState<string | null>(null);
@@ -114,7 +113,7 @@ function App() {
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (sending.current) return;
-    if (mapTest && mapLocationRequired && !customer.location) { setError('Marque seu ponto de entrega no mapa ou desmarque Usar minha localização para concluir sem enviá-la.'); return; }
+    if (mapLocationRequired && !customer.location) { setError('Marque seu ponto de entrega no mapa ou desmarque Usar minha localização para concluir sem enviá-la.'); return; }
     setError(''); sending.current = true; setBusy(true);
     try {
       const body = { cart, customer }; const raw = JSON.stringify(body);
@@ -131,7 +130,6 @@ function App() {
     finally { setBusy(false); sending.current = false; }
   }
   return <>
-    {mapTest && <div className="map-test-banner">Teste de localização opcional. Pedidos feitos aqui entram no painel da loja. <a href="/">Voltar ao formulário sem mapa</a></div>}
     <a className="skip" href="#categorias" onClick={() => setCategory('panquecas')}>Ir para o cardápio</a>
     <div className="top-strip"><span><MapPin size={13}/> Chapadinha, MA</span><span>Da nossa cozinha, com carinho <Heart size={12}/></span></div>
     <header className="site-header"><a href="/" className="wordmark"><span className="brand-icon"><ChefHat size={26}/></span><span>Prazeres <i>da Massa</i></span></a>
@@ -183,20 +181,20 @@ function App() {
       <div className="form-grid"><label>Seu nome<input required autoComplete="name" maxLength={80} minLength={2} value={customer.name} onChange={e => setCustomer(c => ({ ...c, name: e.target.value }))}/></label><label>WhatsApp com DDD<input required type="tel" autoComplete="tel-national" maxLength={22} placeholder="(98) 99999-9999" value={customer.phone} onChange={e => setCustomer(c => ({ ...c, phone: e.target.value }))}/></label></div>
       <div className="form-grid"><label>Rua / Avenida<input required minLength={2} maxLength={200} autoComplete="address-line1" placeholder="Nome da rua ou avenida" value={customer.address} onChange={e => setCustomer(c => ({ ...c, address: e.target.value }))}/></label><label>Número<input required maxLength={20} placeholder="Ex.: 123 ou S/N" value={customer.number ?? ''} onChange={e => setCustomer(c => ({ ...c, number: e.target.value }))}/></label></div>
       <div className="form-grid"><label>Bairro<input required minLength={2} maxLength={80} autoComplete="address-level3" value={customer.neighborhood} onChange={e => setCustomer(c => ({ ...c, neighborhood: e.target.value }))}/></label><label>Referência <span className="optional">(opcional)</span><input maxLength={200} value={customer.reference} onChange={e => setCustomer(c => ({ ...c, reference: e.target.value }))}/></label></div>
-      {mapTest && <DeliveryMap onSelectionChange={setMapLocationRequired} value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
+      {<DeliveryMap onSelectionChange={setMapLocationRequired} value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
       <fieldset className="payment"><legend>Como prefere pagar?</legend><label><input type="radio" name="payment" checked={customer.payment === 'pix'} onChange={() => setCustomer(c => ({ ...c, payment: 'pix' }))}/> Pix</label><label><input type="radio" name="payment" checked={customer.payment === 'card'} onChange={() => setCustomer(c => ({ ...c, payment: 'card' }))}/> Cartão por aproximação</label></fieldset>
       {customer.payment === 'pix' && <p className="pix-notice">Chave Pix: <strong>{SHOP.pix}</strong><br/>Titular: {SHOP.pixOwner}. Aguarde a confirmação da loja antes de pagar.</p>}
       <label>Alguma observação? <span className="optional">(opcional)</span><textarea maxLength={500} rows={2} placeholder="Preferências de preparo ou instruções para entrega" value={customer.notes} onChange={e => setCustomer(c => ({ ...c, notes: e.target.value }))}/></label>
       <label className="privacy-consent"><input type="checkbox" required checked={customer.privacy} onChange={e => setCustomer(c => ({ ...c, privacy: e.target.checked }))}/><span>Li o aviso abaixo e estou ciente do uso dos meus dados para atender e entregar este pedido.</span></label>
       <details className="privacy-details"><summary>Aviso de privacidade</summary><Privacy/></details>
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="primary full" disabled={busy} type="submit">{busy ? 'Registrando seu pedido…' : 'Concluir pedido'} {!busy && <ArrowRight size={17}/>}</button><p className="hint">{mapTest ? 'Seu pedido será registrado no painel da loja. Aguarde a confirmação pelo WhatsApp.' : 'Depois, envie a mensagem no WhatsApp para falar com a loja. O pagamento não é processado neste site.'}</p>
+      <button className="primary full" disabled={busy} type="submit">{busy ? 'Registrando seu pedido…' : 'Concluir pedido'} {!busy && <ArrowRight size={17}/>}</button><p className="hint">Seu pedido será registrado no painel da loja. Aguarde a confirmação pelo WhatsApp.</p>
     </form></Modal>}
-    {receipt && <Modal title={mapTest ? 'Pedido concluído!' : 'Seu pedido foi registrado!'} onClose={() => setReceipt(null)}><OrderSuccess receipt={receipt} panelOnly={mapTest}/></Modal>}
+    {receipt && <Modal title="Pedido concluído!" onClose={() => setReceipt(null)}><OrderSuccess receipt={receipt}/></Modal>}
   </>;
 }
 function Privacy() {
-  return <div className="privacy-copy"><p>A Prazeres da Massa utiliza nome, telefone, endereço, localização opcional e observações para atender o pedido e realizar a entrega. O acesso aos registros é restrito à equipe da loja.</p><p>Os registros deste sistema são eliminados após 90 dias. Ao abrir a conversa, os detalhes do pedido são compartilhados com o WhatsApp, sujeito às regras desse serviço. Mensagens e eventuais comprovantes fora deste site têm retenção própria.</p><p>No teste do mapa, você pode confirmar um ponto de entrega opcional. Ele será guardado junto ao pedido e compartilhado com a loja e, ao enviar a mensagem, com o WhatsApp. O mapa acessa servidores do OpenStreetMap, que recebem dados técnicos da conexão e da área visualizada. A permissão do GPS é opcional; você pode usar somente o endereço escrito.</p><p>O navegador guarda somente o carrinho e um identificador técnico de tentativa. Não usamos cookies de publicidade. A área da loja utiliza um cookie de sessão.</p><p>Para solicitar acesso, correção ou exclusão dos seus dados, entre em contato pelo <a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp da loja</a>.</p></div>;
+  return <div className="privacy-copy"><p>A Prazeres da Massa utiliza nome, telefone, endereço, localização opcional e observações para atender o pedido e realizar a entrega. O acesso aos registros é restrito à equipe da loja.</p><p>Os registros deste sistema são eliminados após 90 dias. Ao abrir a conversa, os detalhes do pedido são compartilhados com o WhatsApp, sujeito às regras desse serviço. Mensagens e eventuais comprovantes fora deste site têm retenção própria.</p><p>Você pode incluir um ponto de entrega opcional pelo mapa. Ele será guardado junto ao pedido e compartilhado com a loja e, ao enviar a mensagem, com o WhatsApp. O mapa acessa servidores do OpenStreetMap, que recebem dados técnicos da conexão e da área visualizada. A permissão do GPS é opcional; você pode usar somente o endereço escrito.</p><p>O navegador guarda somente o carrinho e um identificador técnico de tentativa. Não usamos cookies de publicidade. A área da loja utiliza um cookie de sessão.</p><p>Para solicitar acesso, correção ou exclusão dos seus dados, entre em contato pelo <a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp da loja</a>.</p></div>;
 }
 
 type AdminOrder = { id: number; createdAt: string; status: OrderStatus; customer: Customer; cart: Cart; totalCents: number };
