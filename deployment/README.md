@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare a031980. Orientacao GPS simplificada e destaque do ponto incluido. Apenas teste. Sem segredos.
+Fonte feat/cardapio-cloudflare 15847f7. Resumo na confirmacao preparada WhatsApp. Sem segredos.
