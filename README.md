@@ -21,7 +21,7 @@ Após adicionar panquecas ou bebidas, o cliente escolhe entre **Ir para o carrin
 
 O cardápio possui categorias Panquecas, Massas e Bebidas. A categoria Massas aguarda cadastro de pratos e preços; a mensagem de disponibilidade futura não aceita pedidos. Panquecas têm apenas massa tradicional e verde. Pedidos históricos com massa de beterraba continuam legíveis, mas a API não aceita novos pedidos dessa opção. Itens de beterraba de carrinhos salvos são removidos, preservando os outros itens válidos.
 
-A interface e o painel usam Arial/Helvetica, com textos ampliados e mais contraste. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
+A interface e o painel usam Inter, do Google Fonts, com pesos 400–700, textos ampliados e contraste. Os arquivos são hospedados localmente; o cupom impresso mantém Arial para compatibilidade com drivers. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
 
 Para a Epson L355, selecione a impressora no diálogo do navegador, papel personalizado **102 × 152 mm**, orientação retrato, escala **100%** e desative cabeçalhos/rodapés do navegador. O CSS reserva 5 mm de margem por lado. Se o driver oferecer somente 10 × 15 cm (100 × 150 mm), crie o formato personalizado para corresponder à folha real. O site solicita o tamanho; o formato final e o alinhamento dependem do driver e do carregamento correto do papel. Pedidos extensos continuam em outras folhas, sem cortar o conteúdo. Faça a primeira impressão de conferência antes do uso diário. Não há impressão silenciosa ou acesso direto à impressora.
 
@@ -152,7 +152,7 @@ O build do Git não precisa receber a senha do painel. Os segredos pertencem ao 
 - Componentes e textos: `src/main.tsx`.
 - Estilos próprios: `src/styles.css`. Não há dependência de Tailwind neste projeto.
 - API, autorização e política de retenção: `worker/index.ts`.
-- Marca original: `public/logo.png`, obtida da página existente da loja. Fontes DM Sans e Lora distribuídas com as respectivas licenças OFL em `public/fonts`.
+- Logo atual: `public/logo-nova.png`, enviada pelo proprietário. Fonte Inter hospedada localmente com licença OFL em `public/fonts`.
 - O cardápio é publicado no build. O painel gerencia os pedidos; não inclui edição de catálogo, estoque, várias contas, notificações automáticas, emissão fiscal ou conciliação financeira.
 - O relógio do cliente não decide se um pedido pode ser registrado: a API é a autoridade. A interface consulta o servidor a cada 30 segundos.
 - O número do pedido é uma sequência global única; eventuais intervalos na sequência são normais. A limpeza não reinicia a sequência.
@@ -185,3 +185,9 @@ Não foi realizada validação visual ou interação em navegador nesta sessão,
 Antes de divulgar o endereço, faça um pedido identificado como teste durante o atendimento e confirme: recálculo da promoção, dados no painel, abertura e envio manual da mensagem, mudança de situação e carrinho após atualizar a página. Cancele o pedido de teste no painel. Fora do horário, confira que o registro fica indisponível. Teste também em um celular real.
 
 O aviso de privacidade fornecido descreve o comportamento implementado; ajuste-o se o uso dos dados ou a operação da loja mudar. As mensagens no WhatsApp e dados mantidos em outros sistemas não são apagados pelo cron deste site. Não há rotina de backup externo configurada: use as opções de recuperação/exportação do D1 conforme a necessidade do negócio e a política de retenção.
+
+## Identidade Massas Artesanais
+
+Banner com “Massas Artesanais”, título “Seu sabor. Suas escolhas. Seu pedido.”, instruções de personalização e CTA “Monte seu pedido!”. O preço sobreposto foi removido do banner, preservando preços no catálogo e no carrinho. Adicionais em destaque e lixeira explícita para remover cada refrigerante do carrinho. Inter (Google Fonts) hospedada localmente com licença OFL.
+
+Logo recebida pelo GitHub em `public/logo-nova.png`. O banner exibe a arte inteira, sem recorte e sem preço sobreposto. O arquivo também é usado como ícone do site. Os preços dos produtos e as regras de promoção no carrinho continuam válidos.
