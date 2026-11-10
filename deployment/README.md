@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare 0956278. Titulo: Falta pouco para concluir! Sem segredos.
+Fonte feat/cardapio-cloudflare 5aa7956. Mensagens preparadas de atualizacao. Sem segredos.
