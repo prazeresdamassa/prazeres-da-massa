@@ -1,1 +1,1 @@
-Fonte feat/cardapio-cloudflare 8377997. Controle manual de atendimento. Migracao 0002 aplicada. Sem segredos.
+Fonte feat/cardapio-cloudflare fd4395c. Numero separado no endereco e botoes atualizados. Sem segredos.

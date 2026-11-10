@@ -97,7 +97,8 @@ function validateOrder(value) {
   return { cart, customer: {
     name: text(c.name, "o nome", 2, 80),
     phone,
-    address: text(c.address, "o endere\xE7o", 5, 200),
+    address: text(c.address, "a rua", 2, 200),
+    number: text(c.number, "o n\xFAmero", 1, 20),
     neighborhood: text(c.neighborhood, "o bairro", 2, 80),
     reference: text(c.reference, "a refer\xEAncia", 0, 200),
     notes: text(c.notes, "as observa\xE7\xF5es", 0, 500),
@@ -124,6 +125,10 @@ function describe(p) {
   };
 }
 __name(describe, "describe");
+function formatAddress(customer) {
+  return customer.number ? `${customer.address}, ${customer.number}` : customer.address;
+}
+__name(formatAddress, "formatAddress");
 function whatsappMessage(id, order, createdAt, savedTotalCents = totals(order.cart).totalCents) {
   const label = `#${String(id).padStart(5, "0")}`;
   const c = order.customer;
@@ -135,7 +140,7 @@ function whatsappMessage(id, order, createdAt, savedTotalCents = totals(order.ca
     "",
     `Nome: ${c.name}`,
     `WhatsApp: ${c.phone}`,
-    `Endere\xE7o: ${c.address}`,
+    `Endere\xE7o: ${formatAddress(c)}`,
     `Bairro: ${c.neighborhood}`,
     `Cidade: ${SHOP.city}`,
     c.reference ? `Refer\xEAncia: ${c.reference}` : "",
