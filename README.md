@@ -17,6 +17,8 @@ Os passos de criação de recursos abaixo servem para uma nova instalação em o
 
 ## Menus, leitura e impressão de pedidos
 
+Após adicionar panquecas ou bebidas, o cliente escolhe entre **Ir para o carrinho** (revisar e continuar a finalização existente) ou **Continuar comprando** (voltar ao início dos menus, na categoria selecionada). Nas bebidas, o seletor define apenas a quantidade a adicionar; o carrinho só muda após clicar em **Adicionar**. Dentro do carrinho, a quantidade das bebidas pode ser ajustada ou zerada para remoção.
+
 O cardápio possui categorias Panquecas, Massas e Bebidas. A categoria Massas aguarda cadastro de pratos e preços; a mensagem de disponibilidade futura não aceita pedidos. Panquecas têm apenas massa tradicional e verde. Pedidos históricos com massa de beterraba continuam legíveis, mas a API não aceita novos pedidos dessa opção. Itens de beterraba de carrinhos salvos são removidos, preservando os outros itens válidos.
 
 A interface e o painel usam Arial/Helvetica, com textos ampliados e mais contraste. No painel, cada pedido possui **Imprimir cupom**, que abre a janela nativa de impressão. O cupom contém cliente, endereço, referência, itens, adicionais, observações, forma de pagamento, situação e total registrado no banco. Não é documento fiscal e não comprova pagamento.
