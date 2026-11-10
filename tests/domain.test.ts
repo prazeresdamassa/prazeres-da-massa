@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { shopStatus, totals, validateCart, validateOrder, whatsappMessage, type OrderInput } from '../shared/domain';
 const cart = { pancakes: [{ filling: 'frango', dough: 'tradicional', sauce: 'tomate', extras: ['queijo'], qty: 3 }], drinks: { coca: 1, 'coca-zero': 1 } };
-export const valid: OrderInput = { cart, customer: { name: 'Cliente Teste', phone: '(98) 99999-9999', address: 'Rua de Teste, 10', neighborhood: 'Centro', reference: '', notes: '', payment: 'pix', privacy: true } };
+export const valid: OrderInput = { cart, customer: { name: 'Cliente Teste', phone: '(98) 99999-9999', address: 'Rua de Teste', number: '10', neighborhood: 'Centro', reference: '', notes: '', payment: 'pix', privacy: true } };
 test('promoção combina sabores e usa centavos inteiros', () => {
   assert.deepEqual(totals(cart), { count: 3, pancakeCents: 3498, drinkCents: 1299, totalCents: 4797, savings: 399 });
   assert.equal(totals({ pancakes: [{ ...cart.pancakes[0], qty: 1 }, { ...cart.pancakes[0], filling: 'carne', qty: 1 }], drinks: {} }).totalCents, 2199);
@@ -39,4 +39,11 @@ test('mensagem não declara confirmação nem pagamento automático', () => {
   const text = decodeURIComponent(whatsappMessage(42, validateOrder(valid), '2026-11-12T22:00:00Z'));
   assert.match(text, /#00042/); assert.match(text, /aguardando confirmação/);
   assert.match(text, /47,97/); assert.match(text, /Romilly Sousa Prazeres/);
+});
+
+test('número é obrigatório para novos pedidos e aparece na mensagem', () => {
+  assert.throws(() => validateOrder({ ...valid, customer: { ...valid.customer, number: '' } }));
+  const order = validateOrder({ ...valid, customer: { ...valid.customer, number: '123-B' } });
+  assert.match(decodeURIComponent(whatsappMessage(1, order, '2026-11-12T22:00:00Z')), /Rua de Teste, 123-B/);
+  assert.equal(validateOrder({ ...valid, customer: { ...valid.customer, number: 'S\/N' } }).customer.number, 'S/N');
 });
