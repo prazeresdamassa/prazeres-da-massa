@@ -1,1 +1,1 @@
-Produção main: gestão mensal e trimestral, relatórios salvos e Excel. Agregados sem dados pessoais preservados após 90 dias. Fonte 3000d9d061b40b4519290a2a47a207295769b3ee. Migração 0003 aplicada e inicializada no D1. Sem segredos.
+Produção main: mensagem preparada para o motoboy após saída para entrega. Fonte fb7d5e65da00d3e7a28a4bd820ea3201fe2e94be. Worker e banco preservados; sem migração ou segredos.
