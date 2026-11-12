@@ -1,3 +1,4 @@
+import { managementApi, initializeAnalytics } from './management';
 import { SHOP, ValidationError, shopStatus, validateOrder, totals, whatsappMessage, statusLabels, type OrderStatus, type OrderInput } from '../shared/domain';
 export interface Env { DB: D1Database; ASSETS: Fetcher; ADMIN_PASSWORD?: string; SESSION_SECRET?: string }
 type Row = { id: number; request_hash: string; created_at: string; status: OrderStatus; customer_json: string; items_json: string; total_cents: number; updated_at: string };
@@ -91,6 +92,7 @@ async function api(req: Request, env: Env) {
   }
   if (path.startsWith('/api/admin/')) {
     if (!await authorized(req, env)) return fail('Faça login para continuar.', 401);
+    if (path.startsWith('/api/admin/management')) { const response = await managementApi(req, env.DB, () => readBody(req)); if (response) return response; }
     if (path === '/api/admin/settings' && req.method === 'GET') {
       const row = await env.DB.prepare('SELECT accepting_orders FROM shop_settings WHERE id = 1').first<{ accepting_orders: number }>();
       return json({ acceptingOrders: row?.accepting_orders === 1 });
@@ -139,6 +141,8 @@ export default {
     return new Response(res.body, { status: res.status, headers });
   },
   async scheduled(_event: ScheduledController, env: Env) {
+    // Assegurar resumos agregados antes da exclusão dos dados pessoais.
+    await initializeAnalytics(env.DB);
     // Minimização de dados: eliminar pedidos e dados pessoais após 90 dias.
     await env.DB.batch([
       env.DB.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(Date.now()),
