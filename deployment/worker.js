@@ -175,6 +175,114 @@ Titular: ${SHOP.pixOwner}` : "",
 }
 __name(whatsappMessage, "whatsappMessage");
 
+// shared/management.ts
+function managementPeriod(period) {
+  let year, month, span;
+  if (/^20\d{2}-(0[1-9]|1[0-2])$/.test(period)) {
+    year = Number(period.slice(0, 4));
+    month = Number(period.slice(5));
+    span = 1;
+  } else if (/^20\d{2}-Q[1-4]$/.test(period)) {
+    year = Number(period.slice(0, 4));
+    month = (Number(period.at(-1)) - 1) * 3 + 1;
+    span = 3;
+  } else throw new ValidationError("Escolha um m\xEAs ou trimestre v\xE1lido.");
+  const start = new Date(Date.UTC(year, month - 1, 1)).toISOString().slice(0, 10);
+  const end = new Date(Date.UTC(year, month - 1 + span, 1)).toISOString().slice(0, 10);
+  return { start, end, label: span === 3 ? `${period.at(-1)}\xBA trimestre de ${year}` : new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }) };
+}
+__name(managementPeriod, "managementPeriod");
+function salesMetrics(daily) {
+  const sum = /* @__PURE__ */ __name((key) => daily.reduce((n, row) => n + row[key], 0), "sum");
+  const received = sum("received"), completed = sum("completed"), cancelled = sum("cancelled"), revenueCents = sum("revenue_cents");
+  return { received, completed, cancelled, inProgress: received - completed - cancelled, revenueCents, averageCents: completed ? Math.round(revenueCents / completed) : 0, cancellationRate: received ? cancelled / received * 100 : 0, drinkRate: completed ? sum("drink_completed") / completed * 100 : 0, pixCompleted: sum("pix_completed"), cardCompleted: sum("card_completed") };
+}
+__name(salesMetrics, "salesMetrics");
+
+// worker/analytics-bootstrap.ts
+var bootstrapSql = [
+  "DELETE FROM sales_daily WHERE (SELECT initialized FROM analytics_meta WHERE id = 1) = 0",
+  "DELETE FROM sales_products_daily WHERE (SELECT initialized FROM analytics_meta WHERE id = 1) = 0",
+  "DELETE FROM sales_hourly WHERE (SELECT initialized FROM analytics_meta WHERE id = 1) = 0",
+  "INSERT INTO sales_daily(day, received, pending, accepted, preparing, dispatched, completed, cancelled, revenue_cents, drink_completed, pix_completed, card_completed) SELECT date(o.created_at, '-3 hours'), SUM(1), SUM((o.status = 'pending')), SUM((o.status = 'accepted')), SUM((o.status = 'preparing')), SUM((o.status = 'dispatched')), SUM((o.status = 'completed')), SUM((o.status = 'cancelled')), SUM(CASE WHEN o.status = 'completed' THEN o.total_cents ELSE 0 END), SUM((o.status = 'completed' AND EXISTS (SELECT 1 FROM json_each(o.items_json, '$.drinks') WHERE CAST(value AS INTEGER) > 0))), SUM((o.status = 'completed' AND json_extract(o.customer_json, '$.payment') = 'pix')), SUM((o.status = 'completed' AND json_extract(o.customer_json, '$.payment') = 'card')) FROM orders o WHERE (SELECT initialized FROM analytics_meta WHERE id = 1) = 0 GROUP BY date(o.created_at, '-3 hours')",
+  "INSERT INTO sales_products_daily(day,kind,product_key,quantity) SELECT date(o.created_at, '-3 hours'), 'pancake', json_object('filling', json_extract(p.value, '$.filling'), 'dough', json_extract(p.value, '$.dough'), 'sauce', json_extract(p.value, '$.sauce'), 'extras', json(COALESCE(json_extract(p.value, '$.extras'), '[]'))), SUM(CAST(json_extract(p.value,'$.qty') AS INTEGER)) FROM orders o, json_each(o.items_json,'$.pancakes') p WHERE o.status = 'completed' AND (SELECT initialized FROM analytics_meta WHERE id = 1) = 0 GROUP BY 1,2,3",
+  "INSERT INTO sales_products_daily(day,kind,product_key,quantity) SELECT date(o.created_at, '-3 hours'), 'drink', p.key, SUM(CAST(p.value AS INTEGER)) FROM orders o,json_each(o.items_json,'$.drinks') p WHERE o.status = 'completed' AND CAST(p.value AS INTEGER)>0 AND (SELECT initialized FROM analytics_meta WHERE id = 1) = 0 GROUP BY 1,2,3",
+  "INSERT INTO sales_hourly(day,hour,received) SELECT date(o.created_at, '-3 hours'), CAST(strftime('%H',o.created_at,'-3 hours') AS INTEGER), COUNT(*) FROM orders o WHERE (SELECT initialized FROM analytics_meta WHERE id = 1) = 0 GROUP BY 1,2",
+  "UPDATE analytics_meta SET coverage_from = COALESCE((SELECT MIN(date(o.created_at, '-3 hours')) FROM orders o), date('now','-3 hours')), initialized = 1 WHERE id = 1 AND (SELECT initialized FROM analytics_meta WHERE id = 1) = 0"
+];
+
+// worker/management.ts
+async function initializeAnalytics(db) {
+  const meta = await db.prepare("SELECT initialized FROM analytics_meta WHERE id = 1").first();
+  if (!meta?.initialized) await db.batch(bootstrapSql.map((sql) => db.prepare(sql)));
+}
+__name(initializeAnalytics, "initializeAnalytics");
+async function buildManagementReport(db, period) {
+  const window = managementPeriod(period);
+  await initializeAnalytics(db);
+  const snapshot = await db.batch([
+    db.prepare("SELECT * FROM sales_daily WHERE day >= ? AND day < ? ORDER BY day").bind(window.start, window.end),
+    db.prepare("SELECT kind, product_key, SUM(quantity) as quantity FROM sales_products_daily WHERE day >= ? AND day < ? GROUP BY kind, product_key HAVING SUM(quantity) > 0 ORDER BY quantity DESC, kind, product_key").bind(window.start, window.end),
+    db.prepare("SELECT hour, SUM(received) as received FROM sales_hourly WHERE day >= ? AND day < ? GROUP BY hour ORDER BY hour").bind(window.start, window.end),
+    db.prepare("SELECT coverage_from FROM analytics_meta WHERE id = 1")
+  ]);
+  const days = snapshot[0].results;
+  const items = snapshot[1].results;
+  const hours = snapshot[2].results;
+  const meta = snapshot[3].results[0];
+  const products = items.map((item) => {
+    let label = item.product_key;
+    if (item.kind === "drink") label = drinks.find((d) => d.id === item.product_key)?.name ?? "Bebida";
+    else {
+      try {
+        const p = describe({ ...JSON.parse(item.product_key), qty: 1 });
+        label = `${p.name} \u2014 ${p.details}`;
+      } catch {
+        label = "Combina\xE7\xE3o de panqueca";
+      }
+    }
+    return { ...item, label };
+  });
+  return {
+    version: 1,
+    period,
+    ...window,
+    generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    coverageFrom: meta?.coverage_from ?? window.start,
+    daily: days,
+    products,
+    hourly: hours,
+    metrics: salesMetrics(days)
+  };
+}
+__name(buildManagementReport, "buildManagementReport");
+async function managementApi(req, db, body) {
+  const url = new URL(req.url);
+  const path = url.pathname;
+  const json2 = /* @__PURE__ */ __name((value, status = 200) => new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } }), "json");
+  if (path === "/api/admin/management" && req.method === "GET") return json2(await buildManagementReport(db, url.searchParams.get("period") ?? ""));
+  if (path === "/api/admin/management/reports" && req.method === "GET") {
+    const result = await db.prepare("SELECT period, generated_at FROM management_reports ORDER BY generated_at DESC LIMIT 120").all();
+    return json2({ reports: result.results });
+  }
+  if (path === "/api/admin/management/reports" && req.method === "POST") {
+    const input = await body();
+    if (typeof input?.period !== "string") throw new ValidationError("Escolha o per\xEDodo do relat\xF3rio.");
+    const report = await buildManagementReport(db, input.period);
+    await db.prepare("INSERT INTO management_reports(period, generated_at, payload_json) VALUES (?, ?, ?) ON CONFLICT(period) DO UPDATE SET generated_at = excluded.generated_at, payload_json = excluded.payload_json").bind(report.period, report.generatedAt, JSON.stringify(report)).run();
+    return json2(report, 201);
+  }
+  const prefix = "/api/admin/management/reports/";
+  if (path.startsWith(prefix) && req.method === "GET") {
+    const period = path.slice(prefix.length);
+    managementPeriod(period);
+    const record2 = await db.prepare("SELECT payload_json FROM management_reports WHERE period = ?").bind(period).first();
+    return record2 ? json2(JSON.parse(record2.payload_json)) : json2({ error: "Relat\xF3rio salvo n\xE3o encontrado." }, 404);
+  }
+  return null;
+}
+__name(managementApi, "managementApi");
+
 // worker/index.ts
 var configured = /* @__PURE__ */ __name((env) => !!env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length >= 16 && !!env.SESSION_SECRET && env.SESSION_SECRET.length >= 32, "configured");
 var encoder = new TextEncoder();
@@ -300,6 +408,10 @@ async function api(req, env) {
   }
   if (path.startsWith("/api/admin/")) {
     if (!await authorized(req, env)) return fail("Fa\xE7a login para continuar.", 401);
+    if (path.startsWith("/api/admin/management")) {
+      const response = await managementApi(req, env.DB, () => readBody(req));
+      if (response) return response;
+    }
     if (path === "/api/admin/settings" && req.method === "GET") {
       const row = await env.DB.prepare("SELECT accepting_orders FROM shop_settings WHERE id = 1").first();
       return json({ acceptingOrders: row?.accepting_orders === 1 });
@@ -362,6 +474,7 @@ var index_default = {
     return new Response(res.body, { status: res.status, headers });
   },
   async scheduled(_event, env) {
+    await initializeAnalytics(env.DB);
     await env.DB.batch([
       env.DB.prepare("DELETE FROM rate_limits WHERE expires_at < ?").bind(Date.now()),
       env.DB.prepare("DELETE FROM orders WHERE created_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-90 days')")

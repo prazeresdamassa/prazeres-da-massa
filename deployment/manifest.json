@@ -1,17 +1,42 @@
 {
-  "/assets/index-CH2e1r3Y.css": {
-    "hash": "a726d931fcb92dcf1d280d1cd5e610c3",
-    "size": 57617,
+  "/assets/ManagementPanel-CYU7bk-S.css": {
+    "hash": "5b25f8dd222f7e60ed71513a961b7ca9",
+    "size": 4608,
     "mime": "text/css"
   },
-  "/assets/index-DF7vaRvP.js": {
-    "hash": "05f7d10eea89cbc1570d55fe07288f0d",
-    "size": 280363,
+  "/assets/ManagementPanel-DprUdsOk.js": {
+    "hash": "d2a33485960878276f74941566e8da5c",
+    "size": 12523,
     "mime": "text/javascript"
   },
-  "/assets/leaflet-src-ykyWkY16.js": {
-    "hash": "86e375427bc10ceab97f28f3093ae772",
-    "size": 148602,
+  "/assets/exceljs.min-tdmMIeWm.js": {
+    "hash": "858250f1aff38d1bae7a88755d86b616",
+    "size": 929389,
+    "mime": "text/javascript"
+  },
+  "/assets/index-BfqHlFEv.css": {
+    "hash": "699afda2a5f524e9243dd41781bcc34c",
+    "size": 58063,
+    "mime": "text/css"
+  },
+  "/assets/index-jlg1Dphi.js": {
+    "hash": "784a6dab38e87e636bf7ba732d4c9e7c",
+    "size": 281339,
+    "mime": "text/javascript"
+  },
+  "/assets/leaflet-src-DoC2Zuse.js": {
+    "hash": "6878c30306a0e5a859b82fea0aa82210",
+    "size": 148613,
+    "mime": "text/javascript"
+  },
+  "/assets/management-excel-BcteYZqX.js": {
+    "hash": "d148c45edb578a07232fd08a4e729da6",
+    "size": 3325,
+    "mime": "text/javascript"
+  },
+  "/assets/rolldown-runtime-pP25SEvz.js": {
+    "hash": "c7d5a9b5d4023712538018b5b2ca9c28",
+    "size": 989,
     "mime": "text/javascript"
   },
   "/fonts/DM-Sans-OFL.txt": {
@@ -95,8 +120,8 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "993016649923b953ce18acc04666c0ee",
-    "size": 745,
+    "hash": "b7914cf4dc433ff81f0897e22d0753ad",
+    "size": 832,
     "mime": "text/html"
   },
   "/logo-nova.png": {
