@@ -1,23 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { LocalDB } from './local-db';
 import worker, { type Env } from '../worker/index';
 import type { OrderInput } from '../shared/domain';
-class LocalDB {
-  sqlite = new DatabaseSync(':memory:');
-  constructor() { for (const name of ['0001_orders.sql','0002_shop_settings.sql']) this.sqlite.exec(readFileSync(new URL('../migrations/'+name, import.meta.url), 'utf8')); this.sqlite.exec('UPDATE shop_settings SET accepting_orders = 1'); }
-  prepare(sql: string) {
-    const query = this.sqlite.prepare(sql); let values: (string | number | null)[] = [];
-    const statement = {
-      bind(...args: (string | number | null)[]) { values = args; return statement; },
-      async first() { return query.get(...values) ?? null; },
-      async all() { return { results: query.all(...values) }; },
-      async run() { return query.run(...values); },
-    }; return statement;
-  }
-  async batch(statements: { run(): Promise<unknown> }[]) { this.sqlite.exec('BEGIN'); try { const rows = await Promise.all(statements.map(s => s.run())); this.sqlite.exec('COMMIT'); return rows; } catch (e) { this.sqlite.exec('ROLLBACK'); throw e; } }
-}
 const payload: OrderInput = { cart: { pancakes: [{ filling: 'frango', dough: 'verde', sauce: 'batata', extras: [], qty: 2 }], drinks: {} }, customer: { name: 'Teste de Integração', phone: '98999999999', address: 'Rua de Teste', number: '123', neighborhood: 'Centro', reference: '', notes: '', payment: 'card', privacy: true } };
 function setup() {
   const db = new LocalDB();
@@ -131,5 +116,27 @@ test('sonda autenticada identifica apenas pedidos novos e não expõe dados pess
   const newer = await second.json() as { id: number };
   assert.ok(newer.id > id);
   assert.deepEqual(await (await call('/api/admin/orders/latest','GET',undefined,headers)).json(), { latestId: newer.id });
+  db.sqlite.close();
+});
+
+test('gestão exige autenticação e salva somente relatórios calculados no servidor', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-12T22:00:00Z') });
+  const { call, db } = setup();
+  assert.equal((await call('/api/admin/management?period=2026-11')).status,401);
+  const login=await call('/api/admin/login','POST',{password:'uma-senha-de-teste-comprida'});
+  const headers={Cookie:login.headers.get('Set-Cookie')!.split(';')[0]};
+  const created=await call('/api/orders','POST',payload,{'Idempotency-Key':crypto.randomUUID()});
+  const {id}=await created.json() as {id:number};
+  db.sqlite.prepare("UPDATE orders SET created_at='2026-11-12T22:00:00.000Z'").run();
+  for (const [from,to] of [['pending','accepted'],['accepted','preparing'],['preparing','dispatched'],['dispatched','completed']]) assert.equal((await call(`/api/admin/orders/${id}`,'PATCH',{previousStatus:from,status:to},headers)).status,200);
+  const saved=await call('/api/admin/management/reports','POST',{period:'2026-11',metrics:{revenueCents:1}},headers);
+  assert.equal(saved.status,201);
+  const report=await saved.json() as {metrics:{revenueCents:number;completed:number}};
+  assert.equal(report.metrics.revenueCents,2199);assert.equal(report.metrics.completed,1);
+  assert.ok(!JSON.stringify(report).includes('Teste de Integração'));
+  db.sqlite.exec('DELETE FROM orders');
+  const read=await call('/api/admin/management/reports/2026-11','GET',undefined,headers);
+  assert.equal(read.status,200);assert.deepEqual((await read.json() as typeof report).metrics,report.metrics);
+  assert.equal((await call('/api/admin/management?period=2026-Q9','GET',undefined,headers)).status,400);
   db.sqlite.close();
 });

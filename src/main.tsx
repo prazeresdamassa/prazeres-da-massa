@@ -10,6 +10,8 @@ import { OrderSuccess } from './OrderSuccess';
 import { readNewOrders, includeNewOrders } from '../shared/order-refresh';
 import { preparedStatusMessage } from '../shared/customer-messages';
 
+const ManagementPanel = React.lazy(() => import('./ManagementPanel'));
+
 const CART_KEY = 'pdm:cart:v1';
 const ATTEMPT_KEY = 'pdm:attempt:v1';
 function readCart(): Cart {
@@ -195,13 +197,14 @@ function App() {
   </>;
 }
 function Privacy() {
-  return <div className="privacy-copy"><p>A Prazeres da Massa utiliza nome, telefone, endereço, localização opcional e observações para atender o pedido e realizar a entrega. O acesso aos registros é restrito à equipe da loja.</p><p>Os registros deste sistema são eliminados após 90 dias. Ao abrir a conversa, os detalhes do pedido são compartilhados com o WhatsApp, sujeito às regras desse serviço. Mensagens e eventuais comprovantes fora deste site têm retenção própria.</p><p>Você pode incluir um ponto de entrega opcional pelo mapa. Ele será guardado junto ao pedido e compartilhado com a loja e, ao enviar a mensagem, com o WhatsApp. O mapa acessa servidores do OpenStreetMap, que recebem dados técnicos da conexão e da área visualizada. A permissão do GPS é opcional; você pode usar somente o endereço escrito.</p><p>O navegador guarda somente o carrinho e um identificador técnico de tentativa. Não usamos cookies de publicidade. A área da loja utiliza um cookie de sessão.</p><p>Para solicitar acesso, correção ou exclusão dos seus dados, entre em contato pelo <a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp da loja</a>.</p></div>;
+  return <div className="privacy-copy"><p>A Prazeres da Massa utiliza nome, telefone, endereço, localização opcional e observações para atender o pedido e realizar a entrega. O acesso aos registros é restrito à equipe da loja.</p><p>Os pedidos e seus dados pessoais são eliminados após 90 dias. Resumos estatísticos sem nome, telefone, endereço, localização ou identificação individual permanecem para a gestão da loja. Ao abrir a conversa, os detalhes do pedido são compartilhados com o WhatsApp, sujeito às regras desse serviço. Mensagens e eventuais comprovantes fora deste site têm retenção própria.</p><p>Você pode incluir um ponto de entrega opcional pelo mapa. Ele será guardado junto ao pedido e compartilhado com a loja e, ao enviar a mensagem, com o WhatsApp. O mapa acessa servidores do OpenStreetMap, que recebem dados técnicos da conexão e da área visualizada. A permissão do GPS é opcional; você pode usar somente o endereço escrito.</p><p>O navegador guarda somente o carrinho e um identificador técnico de tentativa. Não usamos cookies de publicidade. A área da loja utiliza um cookie de sessão.</p><p>Para solicitar acesso, correção ou exclusão dos seus dados, entre em contato pelo <a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp da loja</a>.</p></div>;
 }
 
 type AdminOrder = { id: number; createdAt: string; status: OrderStatus; customer: Customer; cart: Cart; totalCents: number };
 const nextStates: Record<OrderStatus, OrderStatus[]> = { pending: ['accepted', 'cancelled'], accepted: ['preparing', 'cancelled'], preparing: ['dispatched', 'cancelled'], dispatched: ['completed', 'cancelled'], completed: [], cancelled: [] };
 const statusActions: Record<OrderStatus, string> = { pending: 'Aguardando confirmação', accepted: 'Confirmar', preparing: 'Em preparo', dispatched: 'Saiu para entrega', completed: 'Concluído', cancelled: 'Cancelar pedido' };
 function Admin() {
+  const [adminView, setAdminView] = useState<'orders' | 'management'>('orders');
   const updatingStatus = useRef(false);
   const latestSeen = useRef(0);
   const authRevision = useRef(0);
@@ -237,7 +240,7 @@ function Admin() {
     return () => { window.removeEventListener('beforeprint', begin); window.removeEventListener('afterprint', end); media.removeEventListener('change', changed); };
   }, []);
   const [filter, setFilter] = useState('active'); const [before, setBefore] = useState<number | null>(null); const [change, setChange] = useState<{ id: number; from: OrderStatus; to: OrderStatus } | null>(null);
-  const paused = busy || savingSetting || !!change || !!notification || printing;
+  const paused = busy || savingSetting || !!change || !!notification || printing || adminView === 'management';
   autoPaused.current = paused || !logged;
   async function load(append = false, force = false): Promise<void> {
     if (polling.current) await polling.current;
@@ -311,6 +314,13 @@ function Admin() {
     return () => { stopped = true; clearTimeout(timer); document.removeEventListener('visibilitychange', resume); window.removeEventListener('online', resume); };
   }, [logged, paused]);
   useEffect(() => { document.title = 'Área da loja | Prazeres da Massa'; void load(); }, []);
+  function expireSession() {
+    authRevision.current++; setLogged(false); setOrders([]); setNotification(null); setPrintOrder(null); setPrinting(false); latestSeen.current = 0; setAdminView('orders');
+  }
+  async function logout() {
+    try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); expireSession(); }
+    catch (err) { setError((err as Error).message); setAdminView('orders'); }
+  }
   async function toggleOrders() {
     if (acceptingOrders === null || savingSetting) return;
     settingsRevision.current++;
@@ -355,7 +365,8 @@ function Admin() {
     finally { setBusy(false); updatingStatus.current = false; }
   }
   return <><div className="admin-shell"><header className="admin-header"><a className="wordmark" href="/"><ChefHat/><span>Prazeres <i>da Massa</i></span></a><span>Área da loja</span></header>
-    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" disabled={refreshing || busy || savingSetting || printing} onClick={() => void load()}>{refreshing ? 'Atualizando…' : 'Atualizar lista'}</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); authRevision.current++; setLogged(false); setOrders([]); setNotification(null); setPrintOrder(null); setPrinting(false); latestSeen.current = 0; } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
+    {logged && <nav className="admin-section-tabs" aria-label="Seções da área da loja"><button type="button" className={adminView === 'orders' ? 'active' : ''} aria-pressed={adminView === 'orders'} disabled={printing || busy || savingSetting} onClick={() => setAdminView('orders')}>Pedidos</button><button type="button" className={adminView === 'management' ? 'active' : ''} aria-pressed={adminView === 'management'} disabled={printing || busy || savingSetting} onClick={() => { setPrintOrder(null); setAdminView('management'); }}>Gestão</button>{adminView === 'management' && <button type="button" className="admin-section-logout" onClick={() => void logout()}>Sair</button>}</nav>}
+    {!logged ? <form className="login-card" onSubmit={login}><div className="login-icon"><LockKeyhole size={28}/></div><span className="overline">BEM-VINDO DE VOLTA</span><h1>O sabor começa aqui.</h1><p>Entre para acompanhar os pedidos da sua cozinha.</p><label>Senha da loja<input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)}/></label>{error && <p className="error" role="alert">{error}</p>}<button className="primary full" disabled={busy}>{busy ? 'Entrando…' : 'Entrar no painel'}<ArrowRight size={17}/></button><a href="/" className="back-link">Voltar ao cardápio</a></form> : adminView === 'management' ? <React.Suspense fallback={<p className="management-loading">Carregando gestão…</p>}><ManagementPanel onSessionExpired={expireSession}/></React.Suspense> : <main className="admin-main"><div className="admin-top"><div><span className="overline">SUA COZINHA EM DIA</span><h1>Pedidos da loja</h1><p>Registros recentes. A confirmação é feita por você.</p></div><div className="admin-actions"><button className="outline-button" disabled={refreshing || busy || savingSetting || printing} onClick={() => void load()}>{refreshing ? 'Atualizando…' : 'Atualizar lista'}</button><button className="text-button" onClick={async () => { try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); authRevision.current++; setLogged(false); setOrders([]); setNotification(null); setPrintOrder(null); setPrinting(false); latestSeen.current = 0; } catch (err) { setError((err as Error).message); } }}>Sair</button></div></div>
       {error && <p className="error" role="alert">{error}</p>}
       <section className="shop-control"><div><h2>Receber pedidos</h2><p>{acceptingOrders ? 'Ligado: clientes podem pedir em qualquer horário.' : 'Desligado: novos pedidos estão pausados.'}</p><small>Controle manual. Os horários do cardápio não ligam ou desligam a loja.</small></div><button type="button" role="switch" aria-checked={acceptingOrders === true} aria-label="Receber pedidos" disabled={savingSetting || acceptingOrders === null} className={`shop-switch ${acceptingOrders ? 'on' : ''}`} onClick={() => void toggleOrders()}><span aria-hidden="true"/>{savingSetting ? 'Salvando…' : acceptingOrders ? 'Ligado' : 'Desligado'}</button></section><p className="hint" role="status">{settingMessage}</p>
       <div className="refresh-indicator"><span>{paused ? 'Verificação automática pausada durante esta ação.' : 'Verificação de novos pedidos ativa · a cada 5 segundos'}</span><p role="status">{autoNotice}</p>{autoError && <p className="warning" role="status">{autoError}</p>}</div>
