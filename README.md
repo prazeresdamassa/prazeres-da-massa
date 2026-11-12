@@ -245,3 +245,13 @@ Os pedidos e seus dados pessoais continuam com retenção de **90 dias**. A migr
 A aba Gestão pausa a verificação de novos pedidos enquanto estiver aberta. Ao voltar a Pedidos, o comportamento existente de detecção de novidades e o botão Atualizar lista permanecem disponíveis. Não há envio automático de planilhas ou de dados para serviços externos.
 
 Validação desta entrega: 27 testes aprovados, TypeScript/build e pacote Worker aprovados, migração conferida no D1 local. Inclui autenticação, relatórios calculados no servidor, backfill, alterações de status, retenção dos agregados, limites de trimestre e leitura de uma planilha Excel gerada. Não houve validação visual interativa por ausência do controle de navegador neste ambiente.
+
+## Mensagem preparada para o motoboy
+
+Após salvar **Saiu para entrega**, o aviso de atualização oferece **Enviar ao motoboy**. O botão também permanece no cartão de pedidos com esse status, inclusive após recarregar o painel. Não aparece antes da saída, em pedidos concluídos ou cancelados, nem quando a gravação do status falha. O fluxo de aviso ao cliente continua disponível.
+
+O botão mostra a prévia da mensagem e o link **Abrir WhatsApp do motoboy**, destinado ao número autorizado **(98) 98166-7883** (DDI 55). A mensagem contém número do pedido, cliente e telefone, endereço completo, referência, localização opcional, itens/quantidades, observações, total histórico e forma de pagamento informada. Ela orienta conferir com a loja se há valor a cobrar, sem afirmar que o pedido foi pago. O telefone do entregador fica centralizado em `shared/courier-message.ts`.
+
+A equipe revisa a mensagem, abre o WhatsApp e toca em Enviar; não há envio automático, confirmação de entrega da mensagem ou alteração adicional de status pelo botão. Fechar a prévia não envia dados. Nenhuma integração paga ou migração de banco é necessária. Os dados são compartilhados para realizar a entrega e o aviso de privacidade descreve esse uso.
+
+Validação: 30 testes automatizados aprovados e build de produção aprovado. Conferência local no Chromium em 1365×900 e 390×844, com pedidos fictícios e API/WhatsApp simulados: falha ao salvar não libera envio; saída salva libera prévia; link tem o destinatário e dados corretos; recarga mantém o botão; conclusão o remove; nenhuma mensagem real enviada. Prévia com rolagem própria mantém o botão de abrir WhatsApp visível no celular.
