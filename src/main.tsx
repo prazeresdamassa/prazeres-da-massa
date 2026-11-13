@@ -5,7 +5,6 @@ import { SHOP, formatAddress, locationUrl, fillings, doughs, sauces, extras, dri
 import './styles.css';
 import './enhancements.css';
 import { PrintReceipt } from './PrintReceipt';
-import { PixPayment } from './PixPayment';
 import { DeliveryMap } from './DeliveryMap';
 import { OrderSuccess } from './OrderSuccess';
 import { readNewOrders, includeNewOrders } from '../shared/order-refresh';
@@ -188,7 +187,6 @@ function App() {
       <div className="form-grid"><label>Bairro<input required minLength={2} maxLength={80} autoComplete="address-level3" value={customer.neighborhood} onChange={e => setCustomer(c => ({ ...c, neighborhood: e.target.value }))}/></label><label>Referência <span className="optional">(opcional)</span><input maxLength={200} value={customer.reference} onChange={e => setCustomer(c => ({ ...c, reference: e.target.value }))}/></label></div>
       {<DeliveryMap onSelectionChange={setMapLocationRequired} value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
       <fieldset className="payment"><legend>Como prefere pagar?</legend><label><input type="radio" name="payment" checked={customer.payment === 'pix'} onChange={() => setCustomer(c => ({ ...c, payment: 'pix' }))}/> Pix</label><label><input type="radio" name="payment" checked={customer.payment === 'card'} onChange={() => setCustomer(c => ({ ...c, payment: 'card' }))}/> Cartão por aproximação</label></fieldset>
-      {customer.payment === 'pix' && <PixPayment/>}
       <label>Alguma observação? <span className="optional">(opcional)</span><textarea maxLength={500} rows={2} placeholder="Preferências de preparo ou instruções para entrega" value={customer.notes} onChange={e => setCustomer(c => ({ ...c, notes: e.target.value }))}/></label>
       <label className="privacy-consent"><input type="checkbox" required checked={customer.privacy} onChange={e => setCustomer(c => ({ ...c, privacy: e.target.checked }))}/><span>Li o aviso abaixo e estou ciente do uso dos meus dados para atender e entregar este pedido.</span></label>
       <details className="privacy-details"><summary>Aviso de privacidade</summary><Privacy/></details>
