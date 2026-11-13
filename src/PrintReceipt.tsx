@@ -10,6 +10,7 @@ export function PrintReceipt({ order }: { order: PrintableOrder }) {
       {drinks.filter(d => order.cart.drinks[d.id]).map(d => <div className="receipt-item" key={d.id}><strong>{order.cart.drinks[d.id]} × {d.name}</strong></div>)}</section>
     {order.customer.notes && <section><h3>Observações</h3><p>{order.customer.notes}</p></section>}
     <section className="receipt-payment"><p>Entrega: grátis, conforme área de atendimento</p><p>Forma de pagamento: <strong>{order.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}</strong></p>
+      {order.customer.payment === 'pix' && <div className="receipt-pix"><p><strong>Chave Pix (celular): {SHOP.pix}</strong></p><p>Titular: {SHOP.pixOwner}</p></div>}
       <p className="receipt-total"><span>Total do pedido</span><strong>{money(order.totalCents)}</strong></p><p>Pagamento sujeito à conferência da loja.</p></section>
     <footer>Obrigado pela preferência!<br/>Comprovante de pedido — não é documento fiscal.</footer>
   </article>;

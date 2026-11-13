@@ -17,8 +17,8 @@ test('API grava em SQLite, recalcula total, reutiliza tentativa e evita exposiç
   t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-11-12T22:00:00Z') });
   const { call, db } = setup(); const key = crypto.randomUUID();
   const first = await call('/api/orders', 'POST', { ...payload, totalCents: 1 }, { 'Idempotency-Key': key });
-  assert.equal(first.status, 201); const data = await first.json() as { id: number; totalCents: number };
-  assert.equal(data.totalCents, 2199);
+  assert.equal(first.status, 201); const data = await first.json() as { id: number; totalCents: number; payment: string };
+  assert.equal(data.totalCents, 2199);assert.equal(data.payment,'card');
   const retry = await call('/api/orders', 'POST', payload, { 'Idempotency-Key': key });
   assert.equal(retry.status, 200); assert.equal((await retry.json() as { id: number }).id, data.id);
   assert.equal((db.sqlite.prepare('SELECT count(*) as n FROM orders').get() as { n: number }).n, 1);
@@ -139,4 +139,20 @@ test('gestão exige autenticação e salva somente relatórios calculados no ser
   assert.equal(read.status,200);assert.deepEqual((await read.json() as typeof report).metrics,report.metrics);
   assert.equal((await call('/api/admin/management?period=2026-Q9','GET',undefined,headers)).status,400);
   db.sqlite.close();
+});
+
+test('recibo preserva Pix em nova tentativa e API salva e reabre dias e períodos',async()=>{
+  const {call,db}=setup();const input={...payload,customer:{...payload.customer,payment:'pix'}};
+  const key=crypto.randomUUID();
+  const first=await call('/api/orders','POST',input,{'Idempotency-Key':key});assert.equal(first.status,201);
+  assert.equal((await first.json() as {payment:string}).payment,'pix');
+  const retry=await call('/api/orders','POST',input,{'Idempotency-Key':key});assert.equal((await retry.json() as {payment:string}).payment,'pix');
+  const login=await call('/api/admin/login','POST',{password:'uma-senha-de-teste-comprida'});
+  const headers={Cookie:login.headers.get('Set-Cookie')!.split(';')[0]};
+  for(const period of ['2026-11-12','2026-11-10_2026-11-15']){
+    assert.equal((await call('/api/admin/management/reports','POST',{period},headers)).status,201);
+    const reopened=await call('/api/admin/management/reports/'+period,'GET',undefined,headers);assert.equal(reopened.status,200);
+    assert.equal((await reopened.json() as {period:string}).period,period);
+  }
+  assert.equal((await call('/api/admin/management?period=2026-11-15_2026-11-10','GET',undefined,headers)).status,400);db.sqlite.close();
 });
