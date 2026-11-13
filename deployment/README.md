@@ -1,1 +1,1 @@
-Produção main: Pix copiável na confirmação, chave Pix no cupom e mensagem do cliente, Gestão diária e por intervalo inclusivo. Fonte 3e612e58eb2d5d638ea36497d9058cba1bd1a9cd. Sem migração ou segredos.
+Produção main: chave Pix somente na confirmação após concluir o pedido. Fonte 1832639bba8921ffc384def9fb40af629c20b99d. Worker e banco preservados. Sem segredos.

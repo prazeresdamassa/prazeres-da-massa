@@ -4,8 +4,8 @@
     "size": 4699,
     "mime": "text/css"
   },
-  "/assets/ManagementPanel-X-CgFxXh.js": {
-    "hash": "faec3bacc85f2a6956e26532291b9808",
+  "/assets/ManagementPanel-RVZq0MD4.js": {
+    "hash": "b0f400903c8e6a440b0ad34078968e3e",
     "size": 15302,
     "mime": "text/javascript"
   },
@@ -14,23 +14,23 @@
     "size": 929389,
     "mime": "text/javascript"
   },
-  "/assets/index-6cS4gzhU.js": {
-    "hash": "dff9d26edeb671ead3eb15291fe7db87",
-    "size": 285001,
-    "mime": "text/javascript"
-  },
   "/assets/index-CfKCNYGH.css": {
     "hash": "dd29dcbbfcbfa195656cc6913b95aef7",
     "size": 59066,
     "mime": "text/css"
+  },
+  "/assets/index-MvE0u-ye.js": {
+    "hash": "b6754538b36729ae0008b3792f42f5e0",
+    "size": 284965,
+    "mime": "text/javascript"
   },
   "/assets/leaflet-src-DJ4Q_oD4.js": {
     "hash": "f32d5fc086e7f10923f8103774a916d2",
     "size": 148613,
     "mime": "text/javascript"
   },
-  "/assets/management-excel-C1JWvIZF.js": {
-    "hash": "bfd5feb0bf2a9d4f084e693cb7829570",
+  "/assets/management-excel-BMNbgSKS.js": {
+    "hash": "9a1cc5dd11a1b01267bbf01741ac6b66",
     "size": 3385,
     "mime": "text/javascript"
   },
@@ -120,7 +120,7 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "003e03dce1f7a7fa267c6a54b315880b",
+    "hash": "c345b71f2ed838516acada4febe176b3",
     "size": 832,
     "mime": "text/html"
   },
