@@ -176,7 +176,31 @@ Titular: ${SHOP.pixOwner}` : "",
 __name(whatsappMessage, "whatsappMessage");
 
 // shared/management.ts
+function managementDate(value) {
+  return value.split("-").reverse().join("/");
+}
+__name(managementDate, "managementDate");
+function nextDay(value) {
+  const date = /* @__PURE__ */ new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+__name(nextDay, "nextDay");
+function validDate(value) {
+  if (!/^20\d{2}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(value)) return false;
+  const date = /* @__PURE__ */ new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+__name(validDate, "validDate");
 function managementPeriod(period) {
+  if (typeof period !== "string") throw new ValidationError("Escolha um per\xEDodo v\xE1lido.");
+  if (period.includes("_")) {
+    const parts = period.split("_");
+    const [start2, last] = parts;
+    if (parts.length !== 2 || !validDate(start2) || !validDate(last) || last < start2) throw new ValidationError("Informe datas v\xE1lidas, com a data final igual ou posterior \xE0 inicial.");
+    return { start: start2, end: nextDay(last), label: `${managementDate(start2)} a ${managementDate(last)}` };
+  }
+  if (validDate(period)) return { start: period, end: nextDay(period), label: managementDate(period) };
   let year, month, span;
   if (/^20\d{2}-(0[1-9]|1[0-2])$/.test(period)) {
     year = Number(period.slice(0, 4));
@@ -186,7 +210,7 @@ function managementPeriod(period) {
     year = Number(period.slice(0, 4));
     month = (Number(period.at(-1)) - 1) * 3 + 1;
     span = 3;
-  } else throw new ValidationError("Escolha um m\xEAs ou trimestre v\xE1lido.");
+  } else throw new ValidationError("Escolha um dia, per\xEDodo, m\xEAs ou trimestre v\xE1lido.");
   const start = new Date(Date.UTC(year, month - 1, 1)).toISOString().slice(0, 10);
   const end = new Date(Date.UTC(year, month - 1 + span, 1)).toISOString().slice(0, 10);
   return { start, end, label: span === 3 ? `${period.at(-1)}\xBA trimestre de ${year}` : new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }) };
@@ -357,6 +381,7 @@ function receipt(row) {
     label: `#${String(row.id).padStart(5, "0")}`,
     totalCents: row.total_cents,
     status: row.status,
+    payment: order.customer.payment,
     createdAt: row.created_at,
     whatsappUrl: whatsappMessage(row.id, order, row.created_at, row.total_cents)
   };

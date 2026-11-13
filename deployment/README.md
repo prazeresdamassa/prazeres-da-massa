@@ -1,1 +1,1 @@
-Produção main: mensagem preparada para o motoboy após saída para entrega. Fonte fb7d5e65da00d3e7a28a4bd820ea3201fe2e94be. Worker e banco preservados; sem migração ou segredos.
+Produção main: Pix copiável na confirmação, chave Pix no cupom e mensagem do cliente, Gestão diária e por intervalo inclusivo. Fonte 3e612e58eb2d5d638ea36497d9058cba1bd1a9cd. Sem migração ou segredos.
