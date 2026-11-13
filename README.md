@@ -258,7 +258,7 @@ Validação: 30 testes automatizados aprovados e build de produção aprovado. C
 
 ## Pix na confirmação e consultas diárias/por período
 
-Quando o pagamento informado é Pix, a tela de entrega e a confirmação após concluir o pedido exibem a chave cadastrada e o botão **Copiar chave**. A confirmação usa a forma de pagamento retornada pelo servidor a partir do pedido gravado, mesmo após a limpeza dos campos do formulário ou nova tentativa idempotente. A cópia informa sucesso somente após a autorização do navegador; se não puder copiar, seleciona o campo e orienta a cópia manual. Pedidos por cartão não exibem essa área. O aviso para aguardar confirmação da loja antes de pagar permanece.
+Quando o pagamento informado é Pix, somente a confirmação após concluir o pedido exibe a chave cadastrada e o botão **Copiar chave**. A tela de preenchimento dos dados e escolha de pagamento não exibe a chave. A confirmação usa a forma de pagamento retornada pelo servidor a partir do pedido gravado, mesmo após a limpeza dos campos do formulário ou nova tentativa idempotente. A cópia informa sucesso somente após a autorização do navegador; se não puder copiar, seleciona o campo e orienta a cópia manual. Pedidos por cartão não exibem essa área. O aviso para aguardar confirmação da loja antes de pagar permanece.
 
 O cupom de 102 × 152 mm inclui chave Pix e titular quando o pagamento é Pix. A mensagem preparada no botão Confirmar, enviada ao cliente pelo WhatsApp, também inclui chave e titular nesses pedidos. Nenhuma chave aparece em pedidos por cartão e nenhuma tela ou cupom atesta pagamento recebido; a conferência segue manual.
 
