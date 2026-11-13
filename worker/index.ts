@@ -48,7 +48,7 @@ async function readBody(req: Request): Promise<unknown> {
 function receipt(row: Row) {
   const order: OrderInput = { customer: JSON.parse(row.customer_json), cart: JSON.parse(row.items_json) };
   return { id: row.id, label: `#${String(row.id).padStart(5, '0')}`, totalCents: row.total_cents,
-    status: row.status, createdAt: row.created_at, whatsappUrl: whatsappMessage(row.id, order, row.created_at, row.total_cents) };
+    status: row.status, payment: order.customer.payment, createdAt: row.created_at, whatsappUrl: whatsappMessage(row.id, order, row.created_at, row.total_cents) };
 }
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   pending: ['accepted', 'cancelled'], accepted: ['preparing', 'cancelled'],

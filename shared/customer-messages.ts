@@ -27,6 +27,7 @@ export function preparedStatusMessage(order: { id: number; customer: Customer; c
     }
     lines.push('', `*Total: ${money(order.totalCents)}*`, `Forma de pagamento: ${order.customer.payment === 'pix' ? 'Pix' : 'Cartão por aproximação'}`,
       `Entrega: ${formatAddress(order.customer)} — ${order.customer.neighborhood}, ${SHOP.city}`);
+    if (order.customer.payment === 'pix') lines.push(`Chave Pix (celular): ${SHOP.pix}`, `Titular: ${SHOP.pixOwner}`, 'Pagamento sujeito à conferência da loja.');
     if (order.customer.reference) lines.push(`Referência: ${order.customer.reference}`);
     if (order.customer.notes) lines.push(`Observações: ${order.customer.notes}`);
     if (order.customer.location) lines.push(`Ponto de entrega: ${locationUrl(order.customer.location)}`);

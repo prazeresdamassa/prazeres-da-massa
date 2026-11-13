@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Cart, Customer } from '../shared/domain';
+import { SHOP, type Cart, type Customer } from '../shared/domain';
 import { preparedStatusMessage } from '../shared/customer-messages';
 
 const base = { cart: { pancakes: [{ filling: 'frango', dough: 'verde', sauce: 'tomate', extras: ['queijo'], qty: 2 }], drinks: { coca: 1 } } as Cart, totalCents: 1800, customer: { name: 'Ana', phone: '(98) 99999-9999', address: 'Rua Teste', number: '42', neighborhood: 'Centro', reference: 'Portão azul', notes: 'Sem orégano', payment: 'pix', privacy: true } as Customer };
@@ -36,4 +36,13 @@ test('confirmação inclui resumo completo e total histórico; outras etapas con
     assert.doesNotMatch(short, /Resumo do pedido|Rua Teste|Sem orégano|18,00/);
     assert.match(short, /#00043/);
   }
+});
+
+test('confirmação ao cliente inclui chave Pix e titular somente no Pix', () => {
+  const pix=preparedStatusMessage({...base,id:43},'accepted')!;
+  assert.ok(pix.text.includes(SHOP.pix));assert.ok(pix.text.includes(SHOP.pixOwner));
+  assert.match(pix.text,/Pagamento sujeito à conferência/);
+  const card=preparedStatusMessage({...base,id:43,customer:{...base.customer,payment:'card'}},'accepted')!;
+  assert.ok(!card.text.includes(SHOP.pix));
+  for (const status of ['preparing','dispatched','completed'] as const) assert.ok(!preparedStatusMessage({...base,id:43},status)!.text.includes(SHOP.pix));
 });

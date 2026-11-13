@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PrintReceipt, type PrintableOrder } from '../src/PrintReceipt';
-import { describe, validateCart } from '../shared/domain';
+import { SHOP, describe, validateCart } from '../shared/domain';
 
 test('massa retirada é rejeitada em novos pedidos e continua legível no histórico', () => {
   const old = { filling: 'frango', dough: 'vermelha', sauce: 'tomate', extras: [], qty: 1 };
@@ -20,4 +20,7 @@ test('cupom mostra total histórico, observações, complementos e escapa dados 
   assert.match(html, /Sem orégano/); assert.match(html, /Portão azul/); assert.match(html, /2 × Coca-Cola/);
   assert.match(html, /Queijo mussarela/); assert.match(html, /&lt;script&gt;/); assert.doesNotMatch(html, /<script>/);
   assert.match(html, /não é documento fiscal/);
+  assert.ok(html.includes(SHOP.pix)); assert.ok(html.includes(SHOP.pixOwner));
+  const card=renderToStaticMarkup(createElement(PrintReceipt,{order:{...order,customer:{...order.customer,payment:'card'}}}));
+  assert.ok(!card.includes(SHOP.pix)); assert.doesNotMatch(card,/Chave Pix/);
 });

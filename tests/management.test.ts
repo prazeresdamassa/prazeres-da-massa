@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { LocalDB } from './local-db';
 import { initializeAnalytics, buildManagementReport } from '../worker/management';
-import { managementPeriod } from '../shared/management';
+import { managementPeriod, managementRange } from '../shared/management';
 import { managementWorkbook } from '../src/management-excel';
 
 function insert(db: LocalDB, id: number, date: string, status: string, cents: number) {
@@ -78,4 +78,34 @@ test('Excel contém números, abas e total histórico, sem informações pessoai
   assert.equal(reopened.getWorksheet('Resumo')!.getCell('B7').value,40);
   assert.ok(!JSON.stringify(reopened.model).includes('Cliente secreto'));
   db.sqlite.close();
+});
+
+test('dia e período personalizado validam datas reais e incluem o último dia', () => {
+  assert.deepEqual(managementPeriod('2026-11-12'),{start:'2026-11-12',end:'2026-11-13',label:'12/11/2026'});
+  assert.deepEqual(managementPeriod('2026-12-31_2027-01-01'),{start:'2026-12-31',end:'2027-01-02',label:'31/12/2026 a 01/01/2027'});
+  assert.equal(managementPeriod('2024-02-29').end,'2024-03-01');
+  assert.equal(managementPeriod('2099-12-31').end,'2100-01-01');
+  assert.equal(managementRange('2026-11-12','2026-11-13'),'12/11/2026');
+  assert.equal(managementRange('2026-11-12','2026-11-14'),'12/11/2026 a 13/11/2026');
+  for(const bad of ['2026-02-29','2026-04-31','2026-00-01','2026-01-00','2026-11-13_2026-11-12','2026-11-12_2026-02-30','2026-11-12_2026-11-13_extra','2026-11-12_','1999-12-31'])assert.throws(()=>managementPeriod(bad),bad);
+});
+
+test('dia e intervalo respeitam meia-noite de Chapadinha e Excel usa datas inclusivas',async()=>{
+  const db=new LocalDB();const binding=db as unknown as D1Database;
+  insert(db,1,'2026-11-12T02:59:59.999Z','completed',500);
+  insert(db,2,'2026-11-12T03:00:00.000Z','completed',1000);
+  insert(db,3,'2026-11-13T02:59:59.999Z','completed',2000);
+  insert(db,4,'2026-11-13T03:00:00.000Z','completed',3000);
+  insert(db,5,'2026-11-14T03:00:00.000Z','completed',5000);
+  const day=await buildManagementReport(binding,'2026-11-12');
+  assert.equal(day.metrics.received,2);assert.equal(day.metrics.revenueCents,3000);
+  assert.deepEqual(day.daily.map(d=>d.day),['2026-11-12']);
+  const range=await buildManagementReport(binding,'2026-11-12_2026-11-13');
+  assert.equal(range.metrics.received,3);assert.equal(range.metrics.revenueCents,6000);assert.equal(range.metrics.averageCents,2000);
+  assert.deepEqual(range.daily.map(d=>d.day),['2026-11-12','2026-11-13']);
+  assert.deepEqual((await buildManagementReport(binding,'2026-11-12_2026-11-12')).metrics,day.metrics);
+  const book=await managementWorkbook(range);
+  assert.equal(book.getWorksheet('Resumo')!.getCell('B2').value,'12/11/2026 a 13/11/2026');
+  assert.match(String(book.getWorksheet('Resumo')!.getCell('C2').value),/12\/11\/2026 a 13\/11\/2026/);
+  assert.equal(book.getWorksheet('Resumo')!.getCell('B7').value,60);db.sqlite.close();
 });
