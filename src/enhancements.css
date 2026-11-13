@@ -85,3 +85,6 @@ body,button,input,textarea,select{font-family:'Inter',Arial,Helvetica,sans-serif
 
 .courier-button{color:#285c3c;border-color:#84a78e;background:#f1f7f1}.courier-followup{margin-top:12px}
 .courier-preview{max-height:36dvh;overflow-y:auto}
+
+.pix-payment{padding:18px;background:#f5eedc;border:1px solid #e0d1ac;border-radius:10px;text-align:left;margin:18px 0}.pix-payment h4{font:600 16px/1.5 'Inter',Arial,sans-serif;margin:0 0 12px;color:#3d2b23}.pix-key-row{display:flex;align-items:center;gap:10px}.pix-key-row input[readonly]{min-width:0;flex:1;font-weight:600;font-size:18px;color:#3d2b23;letter-spacing:.5px;background:#fffdf8}.pix-key-row .outline-button{flex-shrink:0;background:white;padding:12px;font-size:14px}.pix-payment p{font-size:14px;line-height:1.6;color:#594d3c;margin:12px 0 0}.pix-copy-feedback:empty{display:none}.pix-payment .pix-copy-feedback{font-weight:600}.receipt-pix{margin:1mm 0;overflow-wrap:anywhere}
+@media(max-width:420px){.pix-key-row{flex-wrap:wrap}.pix-key-row input[readonly]{flex-basis:100%}.pix-key-row .outline-button{width:100%;justify-content:center}}

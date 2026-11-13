@@ -38,7 +38,7 @@ export type Cart = { pancakes: Pancake[]; drinks: Record<string, number> };
 export type DeliveryLocation = { latitude: number; longitude: number };
 export type Customer = { location?: DeliveryLocation; name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
 export type OrderInput = { cart: Cart; customer: Customer };
-export type Receipt = { id: number; label: string; totalCents: number; status: OrderStatus; whatsappUrl: string; createdAt: string };
+export type Receipt = { payment: Customer['payment']; id: number; label: string; totalCents: number; status: OrderStatus; whatsappUrl: string; createdAt: string };
 export const emptyCart = (): Cart => ({ pancakes: [], drinks: {} });
 export const money = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 export class ValidationError extends Error {}

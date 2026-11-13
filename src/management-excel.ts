@@ -1,4 +1,4 @@
-import type { ManagementReport } from '../shared/management';
+import { managementRange, type ManagementReport } from '../shared/management';
 
 export async function managementWorkbook(report: ManagementReport) {
   const ExcelJS = (await import('exceljs')).default;
@@ -14,7 +14,7 @@ export async function managementWorkbook(report: ManagementReport) {
   };
   const summary = sheet('Resumo', ['Indicador', 'Valor', 'Critério'], [35, 30, 85]);
   summary.addRows([
-    ['Período', report.label, `${report.start} até ${report.end} (fim exclusivo)`],
+    ['Período', report.label, `${managementRange(report.start, report.end)} · Horário de Chapadinha`],
     ['Gerado em', report.generatedAt, 'Horário UTC'],
     ['Histórico disponível desde', report.coverageFrom, 'Pedidos disponíveis ao iniciar os agregados; períodos anteriores podem estar incompletos'],
     ['Pedidos recebidos', report.metrics.received, 'Data de criação no horário de Chapadinha'],
