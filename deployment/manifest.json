@@ -4,8 +4,8 @@
     "size": 4699,
     "mime": "text/css"
   },
-  "/assets/ManagementPanel-RVZq0MD4.js": {
-    "hash": "b0f400903c8e6a440b0ad34078968e3e",
+  "/assets/ManagementPanel-CAYRaVno.js": {
+    "hash": "7d7c2600e09363b2e644de58639e286f",
     "size": 15302,
     "mime": "text/javascript"
   },
@@ -14,23 +14,23 @@
     "size": 929389,
     "mime": "text/javascript"
   },
-  "/assets/index-CfKCNYGH.css": {
-    "hash": "dd29dcbbfcbfa195656cc6913b95aef7",
-    "size": 59066,
-    "mime": "text/css"
-  },
-  "/assets/index-MvE0u-ye.js": {
-    "hash": "b6754538b36729ae0008b3792f42f5e0",
-    "size": 284965,
+  "/assets/index-CTYXSbYR.js": {
+    "hash": "9f0b80de48dc7aea897e29acdabc3114",
+    "size": 285957,
     "mime": "text/javascript"
+  },
+  "/assets/index-Chxv81gz.css": {
+    "hash": "908f91a189621ebb2d3c0b68a238c3e4",
+    "size": 60766,
+    "mime": "text/css"
   },
   "/assets/leaflet-src-DJ4Q_oD4.js": {
     "hash": "f32d5fc086e7f10923f8103774a916d2",
     "size": 148613,
     "mime": "text/javascript"
   },
-  "/assets/management-excel-BMNbgSKS.js": {
-    "hash": "9a1cc5dd11a1b01267bbf01741ac6b66",
+  "/assets/management-excel-RFwh0JNy.js": {
+    "hash": "791385c39e7e71da32e5fc592814d4f2",
     "size": 3385,
     "mime": "text/javascript"
   },
@@ -40,8 +40,8 @@
     "mime": "text/javascript"
   },
   "/fonts/DM-Sans-OFL.txt": {
-    "hash": "9af36190332437f5ecd09974de43c1f7",
-    "size": 4482,
+    "hash": "7ec15e79c59bc14b86436a17e5eb7926",
+    "size": 4388,
     "mime": "text/plain"
   },
   "/fonts/Inter-OFL.txt": {
@@ -50,8 +50,8 @@
     "mime": "text/plain"
   },
   "/fonts/Lora-OFL.txt": {
-    "hash": "1d9a970809ac804b582a6ce7f0ebc4e7",
-    "size": 4423,
+    "hash": "6d6bc7bbb828514925dabcaf89e47713",
+    "size": 4422,
     "mime": "text/plain"
   },
   "/fonts/font-0.ttf": {
@@ -120,7 +120,7 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "c345b71f2ed838516acada4febe176b3",
+    "hash": "4d6c888f4e5e81a3eba023c7874431cb",
     "size": 832,
     "mime": "text/html"
   },

@@ -1,1 +1,1 @@
-Produção main: chave Pix somente na confirmação após concluir o pedido. Fonte 1832639bba8921ffc384def9fb40af629c20b99d. Worker e banco preservados. Sem segredos.
+Produção main: disponibilidade no início, logo no cabeçalho, localização antes do mapa, pagamento destacado e pedido sem checkbox de leitura. Fonte ab66eef0d2a3bee06d56a29bd398ef015a3795dd. Sem migração ou segredos.
