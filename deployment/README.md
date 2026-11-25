@@ -1,1 +1,1 @@
-Produção main: opções de pagamento compactas, alinhadas e com legenda separada. Fonte 2731bffb1dba344fc201b409dd407cf3c14d211f. Worker e banco preservados.
+Produção main: controle manual de estoque e timer persistente de preparo, verde até 40 minutos e vermelho acima, encerrado na saída. Fonte f8e856add5b7535ac49b1f0d3b24799cf4311b7a. Migração 0004 aplicada no D1, pedidos/totais/controle de atendimento preservados. Sem segredos.

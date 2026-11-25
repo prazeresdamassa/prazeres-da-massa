@@ -1,27 +1,32 @@
 {
-  "/assets/ManagementPanel-BTKnxT_7.js": {
-    "hash": "8b046dd3be88b59d7f3847b74f24296c",
-    "size": 15302,
-    "mime": "text/javascript"
-  },
   "/assets/ManagementPanel-B_3yzu_u.css": {
     "hash": "72f44e22230fe623883d7c0c97e81900",
     "size": 4699,
     "mime": "text/css"
+  },
+  "/assets/ManagementPanel-BzQl07Gh.js": {
+    "hash": "7249259326f4ce5a7ea4efc0614d5928",
+    "size": 15056,
+    "mime": "text/javascript"
+  },
+  "/assets/StockPanel-BFEuv8H8.js": {
+    "hash": "be56feeebb5aeed8aa6444a2bc50f5b3",
+    "size": 3916,
+    "mime": "text/javascript"
   },
   "/assets/exceljs.min-DqPyZ1yt.js": {
     "hash": "953cb19e0dee43f99aa95850d44a162a",
     "size": 929389,
     "mime": "text/javascript"
   },
-  "/assets/index-C0nMBFb_.css": {
-    "hash": "3d4d80f37fe88950737fd4edf947ecb5",
-    "size": 61944,
+  "/assets/index-Dn6XSioA.css": {
+    "hash": "2ccf331c2d1601bb4d8ff1f14fc60c20",
+    "size": 65436,
     "mime": "text/css"
   },
-  "/assets/index-ftasvsRX.js": {
-    "hash": "224acc4b51f0f0671ef80abc3eddc44a",
-    "size": 287565,
+  "/assets/index-QfyyJF6N.js": {
+    "hash": "bac86a07910c39bab71cace2572ba340",
+    "size": 293532,
     "mime": "text/javascript"
   },
   "/assets/leaflet-src-DJ4Q_oD4.js": {
@@ -29,9 +34,14 @@
     "size": 148613,
     "mime": "text/javascript"
   },
-  "/assets/management-excel-BF7xvWzC.js": {
-    "hash": "53967a0d05887fd2e63e0e9f0b966a47",
+  "/assets/management-excel-DWc10U2J.js": {
+    "hash": "01a938b620c3430063f709f1ea0ef592",
     "size": 3385,
+    "mime": "text/javascript"
+  },
+  "/assets/refresh-cw-BRmOg6e6.js": {
+    "hash": "34d1c112d1954ac6a1a484690be76a47",
+    "size": 350,
     "mime": "text/javascript"
   },
   "/assets/rolldown-runtime-COiEfhsA.js": {
@@ -120,7 +130,7 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "8b695f4b4e553c0e837c20daa3c34577",
+    "hash": "db026130777aa28386e8c2791444d1f1",
     "size": 832,
     "mime": "text/html"
   },
