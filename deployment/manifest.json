@@ -4,13 +4,13 @@
     "size": 4699,
     "mime": "text/css"
   },
-  "/assets/ManagementPanel-BzQl07Gh.js": {
-    "hash": "7249259326f4ce5a7ea4efc0614d5928",
+  "/assets/ManagementPanel-CjgcUMh4.js": {
+    "hash": "0c28b31152de8e37ca11e954639d3a73",
     "size": 15056,
     "mime": "text/javascript"
   },
-  "/assets/StockPanel-BFEuv8H8.js": {
-    "hash": "be56feeebb5aeed8aa6444a2bc50f5b3",
+  "/assets/StockPanel-BapBy_KM.js": {
+    "hash": "d42745bbb9afb404b5a23709a43a7318",
     "size": 3916,
     "mime": "text/javascript"
   },
@@ -24,9 +24,9 @@
     "size": 65436,
     "mime": "text/css"
   },
-  "/assets/index-QfyyJF6N.js": {
-    "hash": "bac86a07910c39bab71cace2572ba340",
-    "size": 293532,
+  "/assets/index-GlD8VqRi.js": {
+    "hash": "5137ec712255618f73357288a5415596",
+    "size": 294347,
     "mime": "text/javascript"
   },
   "/assets/leaflet-src-DJ4Q_oD4.js": {
@@ -34,13 +34,13 @@
     "size": 148613,
     "mime": "text/javascript"
   },
-  "/assets/management-excel-DWc10U2J.js": {
-    "hash": "01a938b620c3430063f709f1ea0ef592",
+  "/assets/management-excel-nUnTKUVB.js": {
+    "hash": "172b81a9ebcf43141e1653f661efd8b9",
     "size": 3385,
     "mime": "text/javascript"
   },
-  "/assets/refresh-cw-BRmOg6e6.js": {
-    "hash": "34d1c112d1954ac6a1a484690be76a47",
+  "/assets/refresh-cw-lrwxfG9A.js": {
+    "hash": "a4557e040fbefed8251b98b102bbcf13",
     "size": 350,
     "mime": "text/javascript"
   },
@@ -130,7 +130,7 @@
     "mime": "text/css"
   },
   "/index.html": {
-    "hash": "db026130777aa28386e8c2791444d1f1",
+    "hash": "72ff3ec2a15aca699a3db07711a8fa22",
     "size": 832,
     "mime": "text/html"
   },

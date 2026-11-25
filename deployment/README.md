@@ -1,1 +1,1 @@
-Produção main: controle manual de estoque e timer persistente de preparo, verde até 40 minutos e vermelho acima, encerrado na saída. Fonte f8e856add5b7535ac49b1f0d3b24799cf4311b7a. Migração 0004 aplicada no D1, pedidos/totais/controle de atendimento preservados. Sem segredos.
+Produção main: mensagens de preparação, rota e entrega conforme modelos da loja, com emojis e negrito WhatsApp. Fonte b01a9aa9456fbbc3df1317d24b815f3675f75776. Worker e banco preservados.
