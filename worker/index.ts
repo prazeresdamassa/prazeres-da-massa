@@ -1,7 +1,9 @@
+import { stockCatalog, cartStockKeys } from '../shared/inventory';
+import { unavailableStock, inventoryList, stockError } from './inventory';
 import { managementApi, initializeAnalytics } from './management';
 import { SHOP, ValidationError, shopStatus, validateOrder, totals, whatsappMessage, statusLabels, type OrderStatus, type OrderInput } from '../shared/domain';
 export interface Env { DB: D1Database; ASSETS: Fetcher; ADMIN_PASSWORD?: string; SESSION_SECRET?: string }
-type Row = { id: number; request_hash: string; created_at: string; status: OrderStatus; customer_json: string; items_json: string; total_cents: number; updated_at: string };
+type Row = { id: number; request_hash: string; created_at: string; status: OrderStatus; customer_json: string; items_json: string; total_cents: number; updated_at: string; preparation_started_at: string | null; preparation_finished_at: string | null };
 const configured = (env: Env) => !!env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length >= 16 && !!env.SESSION_SECRET && env.SESSION_SECRET.length >= 32;
 const encoder = new TextEncoder();
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
@@ -60,7 +62,7 @@ async function api(req: Request, env: Env) {
   if (path === '/api/status' && req.method === 'GET') {
     const setting = await env.DB.prepare('SELECT accepting_orders FROM shop_settings WHERE id = 1').first<{ accepting_orders: number }>();
     const open = configured(env) && setting?.accepting_orders === 1;
-    return json({ open, ready: configured(env), today: open ? 'Recebendo pedidos' : 'Novos pedidos pausados', serverTime: new Date().toISOString() });
+    return json({ open, ready: configured(env), today: open ? 'Recebendo pedidos' : 'Novos pedidos pausados', serverTime: new Date().toISOString(), unavailable: await unavailableStock(env.DB) });
   }
   if (path === '/api/orders' && req.method === 'POST') {
     if (!configured(env)) return fail('A loja está finalizando a configuração do atendimento. Tente mais tarde.', 503);
@@ -73,10 +75,12 @@ async function api(req: Request, env: Env) {
     if (existing) return existing.request_hash === hash ? json(receipt(existing)) : fail('Esta tentativa pertence a outro pedido. Atualize os dados para continuar.', 409);
     const setting = await env.DB.prepare('SELECT accepting_orders FROM shop_settings WHERE id = 1').first<{ accepting_orders: number }>();
     if (setting?.accepting_orders !== 1) return fail('A loja pausou novos pedidos. Seu carrinho continua salvo.', 409);
-    const row = await env.DB.prepare('INSERT INTO orders (request_key, request_hash, customer_json, items_json, total_cents) SELECT ?, ?, ?, ?, ? FROM shop_settings WHERE id = 1 AND accepting_orders = 1 ON CONFLICT(request_key) DO NOTHING RETURNING *')
-      .bind(key, hash, JSON.stringify(order.customer), JSON.stringify(order.cart), totals(order.cart).totalCents).first<Row>();
+    const unavailableMessage = await stockError(env.DB, order.cart);
+    if (unavailableMessage) return fail(unavailableMessage, 409);
+    const row = await env.DB.prepare('INSERT INTO orders (request_key, request_hash, customer_json, items_json, total_cents) SELECT ?, ?, ?, ?, ? FROM shop_settings WHERE id = 1 AND accepting_orders = 1 AND NOT EXISTS (SELECT 1 FROM inventory WHERE available = 0 AND key IN (SELECT value FROM json_each(?))) ON CONFLICT(request_key) DO NOTHING RETURNING *')
+      .bind(key, hash, JSON.stringify(order.customer), JSON.stringify(order.cart), totals(order.cart).totalCents, JSON.stringify(cartStockKeys(order.cart))).first<Row>();
     const saved = row ?? await env.DB.prepare('SELECT * FROM orders WHERE request_key = ?').bind(key).first<Row>();
-    if (!saved) return fail('A loja pausou novos pedidos. Seu carrinho continua salvo.', 409);
+    if (!saved) return fail(await stockError(env.DB, order.cart) ?? 'A loja pausou novos pedidos. Seu carrinho continua salvo.', 409);
     if (saved.request_hash !== hash) return fail('Tentativa conflitante. Revise seu pedido.', 409);
     return json(receipt(saved), row ? 201 : 200);
   }
@@ -92,6 +96,14 @@ async function api(req: Request, env: Env) {
   }
   if (path.startsWith('/api/admin/')) {
     if (!await authorized(req, env)) return fail('Faça login para continuar.', 401);
+    if (path === '/api/admin/inventory' && req.method === 'GET') return json({ items: await inventoryList(env.DB) });
+    if (path === '/api/admin/inventory' && req.method === 'PATCH') {
+      const body=await readBody(req) as { key?: unknown; available?: unknown; previousAvailable?: unknown };
+      if (typeof body?.key!=='string'||!stockCatalog.some(p=>p.key===body.key)||typeof body.available!=='boolean'||typeof body.previousAvailable!=='boolean') return fail('Escolha um item e uma disponibilidade válidos.',400);
+      const row=await env.DB.prepare("UPDATE inventory SET available = ?, updated_at = ? WHERE key = ? AND available = ? RETURNING key")
+        .bind(body.available?1:0,new Date().toISOString(),body.key,body.previousAvailable?1:0).first();
+      return row ? json({items:await inventoryList(env.DB)}) : fail('O estoque foi alterado em outra sessão. Atualize os itens.',409);
+    }
     if (path.startsWith('/api/admin/management')) { const response = await managementApi(req, env.DB, () => readBody(req)); if (response) return response; }
     if (path === '/api/admin/settings' && req.method === 'GET') {
       const row = await env.DB.prepare('SELECT accepting_orders FROM shop_settings WHERE id = 1').first<{ accepting_orders: number }>();
@@ -113,17 +125,18 @@ async function api(req: Request, env: Env) {
     if (path === '/api/admin/orders' && req.method === 'GET') {
       const before = Number(url.searchParams.get('before') || Number.MAX_SAFE_INTEGER);
       if (!Number.isSafeInteger(before) || before <= 0) return fail('Página inválida.', 400);
-      const rows = await env.DB.prepare('SELECT id, created_at, updated_at, status, customer_json, items_json, total_cents FROM orders WHERE id < ? ORDER BY id DESC LIMIT 50').bind(before).all<Row>();
-      return json({ orders: rows.results.map(row => ({ id: row.id, createdAt: row.created_at, updatedAt: row.updated_at, status: row.status,
-        customer: JSON.parse(row.customer_json), cart: JSON.parse(row.items_json), totalCents: row.total_cents })), nextBefore: rows.results.length === 50 ? rows.results[49].id : null });
+      const rows = await env.DB.prepare('SELECT id, created_at, updated_at, status, customer_json, items_json, total_cents, preparation_started_at, preparation_finished_at FROM orders WHERE id < ? ORDER BY id DESC LIMIT 50').bind(before).all<Row>();
+      return json({ orders: rows.results.map(row => ({ id: row.id, createdAt: row.created_at, updatedAt: row.updated_at, status: row.status, preparationStartedAt: row.preparation_started_at, preparationFinishedAt: row.preparation_finished_at,
+        customer: JSON.parse(row.customer_json), cart: JSON.parse(row.items_json), totalCents: row.total_cents })), nextBefore: rows.results.length === 50 ? rows.results[49].id : null, serverTime: new Date().toISOString() });
     }
     const match = path.match(/^\/api\/admin\/orders\/(\d+)$/);
     if (match && req.method === 'PATCH') {
       const body = await readBody(req) as { status?: OrderStatus; previousStatus?: OrderStatus };
       if (!body?.status || !(body.status in statusLabels) || !body.previousStatus || !Object.hasOwn(transitions, body.previousStatus) || !transitions[body.previousStatus].includes(body.status)) return fail('Mudança de situação inválida.', 400);
-      const row = await env.DB.prepare("UPDATE orders SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ? AND status = ? RETURNING id")
-        .bind(body.status, Number(match[1]), body.previousStatus).first();
-      return row ? json({ ok: true }) : fail('O pedido foi atualizado em outra sessão. Atualize a lista.', 409);
+      const now=new Date().toISOString();
+      const row = await env.DB.prepare("UPDATE orders SET status = ?, updated_at = ?, preparation_started_at = CASE WHEN ? = 'preparing' THEN COALESCE(preparation_started_at, ?) ELSE preparation_started_at END, preparation_finished_at = CASE WHEN ? IN ('dispatched','cancelled') AND preparation_started_at IS NOT NULL THEN COALESCE(preparation_finished_at, ?) ELSE preparation_finished_at END WHERE id = ? AND status = ? RETURNING id, preparation_started_at, preparation_finished_at")
+        .bind(body.status, now, body.status, now, body.status, now, Number(match[1]), body.previousStatus).first<{id:number;preparation_started_at:string|null;preparation_finished_at:string|null}>();
+      return row ? json({ ok: true, preparationStartedAt:row.preparation_started_at, preparationFinishedAt:row.preparation_finished_at, serverTime:now }) : fail('O pedido foi atualizado em outra sessão. Atualize a lista.', 409);
     }
   }
   return fail('Recurso não encontrado.', 404);
