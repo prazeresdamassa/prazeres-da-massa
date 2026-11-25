@@ -166,3 +166,65 @@ test('API conclui pedido sem caixa de leitura do aviso e não registra consentim
   assert.equal((await call('/api/orders','POST',input,{'Idempotency-Key':key})).status,200);
   db.sqlite.close();
 });
+
+test('estoque exige login/origem e bloqueia opções e bebidas, preservando pedidos já recebidos',async()=>{
+  const {call,db}=setup();
+  assert.equal((await call('/api/admin/inventory')).status,401);
+  const login=await call('/api/admin/login','POST',{password:'uma-senha-de-teste-comprida'});
+  const headers={Cookie:login.headers.get('Set-Cookie')!.split(';')[0]};
+  const patch=(key:string,available:boolean,previousAvailable:boolean)=>call('/api/admin/inventory','PATCH',{key,available,previousAvailable},headers);
+  assert.equal((await call('/api/admin/inventory','PATCH',{key:'filling:frango',available:false,previousAvailable:true},{...headers,Origin:'https://outro.test'})).status,403);
+  assert.equal((await patch('falso',false,true)).status,400);
+  const key=crypto.randomUUID();const saved=await call('/api/orders','POST',payload,{'Idempotency-Key':key});assert.equal(saved.status,201);
+  for(const stockKey of ['filling:frango','dough:verde','sauce:batata']){
+    assert.equal((await patch(stockKey,false,true)).status,200);
+    const status=await (await call('/api/status')).json() as {unavailable:string[]};assert.ok(status.unavailable.includes(stockKey));
+    const denied=await call('/api/orders','POST',payload,{'Idempotency-Key':crypto.randomUUID()});assert.equal(denied.status,409);
+    assert.match((await denied.json() as {error:string}).error,/esgotados/);
+    assert.equal((await call('/api/orders','POST',payload,{'Idempotency-Key':key})).status,200);
+    assert.equal((await patch(stockKey,true,true)).status,409);
+    assert.equal((await patch(stockKey,true,false)).status,200);
+  }
+  assert.equal((await patch('drink:coca',false,true)).status,200);
+  const drinkOrder={...payload,cart:{...payload.cart,drinks:{coca:1}}};
+  assert.equal((await call('/api/orders','POST',drinkOrder,{'Idempotency-Key':crypto.randomUUID()})).status,409);
+  const extraOrder={...payload,cart:{...payload.cart,pancakes:[{...payload.cart.pancakes[0],extras:['queijo']}]}};
+  await patch('extra:queijo',false,true);
+  assert.equal((await call('/api/orders','POST',extraOrder,{'Idempotency-Key':crypto.randomUUID()})).status,409);
+  assert.equal(db.sqlite.prepare('SELECT count(*) AS n FROM orders').get()!.n,1);
+  const inventory=await (await call('/api/admin/inventory','GET',undefined,headers)).json() as {items:{key:string;available:boolean}[]};
+  assert.equal(inventory.items.find(p=>p.key==='drink:coca')!.available,false);
+  db.sqlite.close();
+});
+
+test('checagem de estoque no INSERT impede venda quando item esgota após a verificação inicial',async()=>{
+  const {call,db,env}=setup();const prepare=db.prepare.bind(db);let intercepted=false;
+  env.DB={...env.DB,prepare(sql:string){if(sql.startsWith('INSERT INTO orders')&&!intercepted){intercepted=true;db.sqlite.exec("UPDATE inventory SET available=0 WHERE key='filling:frango'");}return prepare(sql);}} as unknown as D1Database;
+  const response=await call('/api/orders','POST',payload,{'Idempotency-Key':crypto.randomUUID()});
+  assert.equal(response.status,409);assert.match((await response.json() as {error:string}).error,/Frango/);
+  assert.equal(db.sqlite.prepare('SELECT count(*) AS n FROM orders').get()!.n,0);db.sqlite.close();
+});
+
+test('horários de preparo são persistidos pelo servidor e congelados na saída ou cancelamento',async t=>{
+  const {call,db}=setup();t.mock.timers.enable({apis:['Date'],now:new Date('2026-11-25T19:00:00.000Z')});
+  const login=await call('/api/admin/login','POST',{password:'uma-senha-de-teste-comprida'});
+  const headers={Cookie:login.headers.get('Set-Cookie')!.split(';')[0]};
+  const created=await call('/api/orders','POST',payload,{'Idempotency-Key':crypto.randomUUID()});const {id}=await created.json() as {id:number};
+  const change=(previousStatus:string,status:string)=>call(`/api/admin/orders/${id}`,'PATCH',{previousStatus,status},headers);
+  const accepted=await (await change('pending','accepted')).json() as {preparationStartedAt:string|null};assert.equal(accepted.preparationStartedAt,null);
+  const start=await (await change('accepted','preparing')).json() as {preparationStartedAt:string;preparationFinishedAt:string|null};
+  assert.equal(start.preparationStartedAt,'2026-11-25T19:00:00.000Z');assert.equal(start.preparationFinishedAt,null);
+  t.mock.timers.setTime(new Date('2026-11-25T19:10:00.000Z').getTime());
+  assert.equal((await change('accepted','preparing')).status,409);
+  const list=await (await call('/api/admin/orders','GET',undefined,headers)).json() as {orders:{preparationStartedAt:string;preparationFinishedAt:string|null}[];serverTime:string};
+  assert.equal(list.orders[0].preparationStartedAt,start.preparationStartedAt);assert.equal(list.orders[0].preparationFinishedAt,null);assert.equal(list.serverTime,'2026-11-25T19:10:00.000Z');
+  t.mock.timers.setTime(new Date('2026-11-25T19:40:01.000Z').getTime());
+  const end=await (await change('preparing','dispatched')).json() as {preparationStartedAt:string;preparationFinishedAt:string};
+  assert.equal(end.preparationStartedAt,start.preparationStartedAt);assert.equal(end.preparationFinishedAt,'2026-11-25T19:40:01.000Z');
+  t.mock.timers.setTime(new Date('2026-11-25T20:00:00.000Z').getTime());
+  const complete=await (await change('dispatched','completed')).json() as {preparationFinishedAt:string};assert.equal(complete.preparationFinishedAt,end.preparationFinishedAt);
+  const another=await (await call('/api/orders','POST',payload,{'Idempotency-Key':crypto.randomUUID()})).json() as {id:number};
+  for(const [previousStatus,status] of [['pending','accepted'],['accepted','preparing'],['preparing','cancelled']])assert.equal((await call(`/api/admin/orders/${another.id}`,'PATCH',{previousStatus,status},headers)).status,200);
+  const cancelled=db.sqlite.prepare('SELECT preparation_finished_at FROM orders WHERE id=?').get(another.id);assert.equal(cancelled!.preparation_finished_at,'2026-11-25T20:00:00.000Z');
+  db.sqlite.close();
+});
