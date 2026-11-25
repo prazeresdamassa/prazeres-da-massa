@@ -69,9 +69,9 @@ export function DeliveryMap({ value, onChange, onSelectionChange }: { value?: De
   return <section className="delivery-location" aria-label="Localização de entrega opcional">
     <h3>Marque seu local de entrega</h3>
     <p>Clique no mapa ou arraste o marcador até o local correto. Marque <strong>Usar minha localização</strong> para incluir o ponto no pedido; desmarque para não enviá-lo. Rua e número continuam obrigatórios.</p>
-    <div ref={container} className="delivery-map" tabIndex={0} aria-label="Mapa: use as setas para mover e Enter para marcar o local" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const center = map.current?.getCenter(); if (center) pick.current({ latitude: center.lat, longitude: center.lng }); } }}/>
     <label className="location-checkbox"><input type="checkbox" checked={selected} disabled={!ready && !selected} onChange={e => toggle(e.target.checked)}/><span>Usar minha localização</span></label>
     <p className="hint">Ao marcar a caixa “Usar minha localização”, dê permissão para usar o GPS do celular. Ajuste o marcador se necessário.</p>
+    <div ref={container} className="delivery-map" tabIndex={0} aria-label="Mapa: use as setas para mover e Enter para marcar o local" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const center = map.current?.getCenter(); if (center) pick.current({ latitude: center.lat, longitude: center.lng }); } }}/>
     {waiting && <p className="hint" role="status">Buscando sua localização… Você também pode marcar o ponto manualmente.</p>}
     {draft && <p className="hint">Ponto marcado: {draft.latitude.toFixed(6)}, {draft.longitude.toFixed(6)}</p>}
     <p className={`map-confirmed ${selected && value ? 'is-included' : ''}`} role="status">{selected ? value ? 'Este ponto será incluído ao concluir o pedido.' : 'Marque um ponto ou aguarde o GPS. A caixa também pode ser desmarcada.' : 'A localização não será enviada. O pedido seguirá com o endereço escrito.'}</p>

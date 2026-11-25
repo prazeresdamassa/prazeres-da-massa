@@ -31,7 +31,6 @@ test('rejeita opções desconhecidas, adicionais repetidos e quantidades abusiva
     assert.throws(() => validateCart({ pancakes: [pancake], drinks: {} }));
   }
   assert.throws(() => validateCart({ pancakes: [], drinks: { falso: 1 } }));
-  assert.throws(() => validateOrder({ ...valid, customer: { ...valid.customer, privacy: false } }));
   assert.throws(() => validateOrder({ ...valid, customer: { ...valid.customer, phone: '123' } }));
   assert.throws(() => validateOrder({ ...valid, cart: { pancakes: [], drinks: { coca: 1 } } }));
 });
@@ -56,4 +55,11 @@ test('localização opcional é validada e incluída no WhatsApp sem afetar o en
   assert.match(decodeURIComponent(whatsappMessage(42, mapped, '2026-11-12T22:00:00Z')), /https:\/\/www.google.com\/maps\?q=-3.738312,-43.353612/);
   assert.equal(mapped.customer.address, plain.customer.address);
   for (const invalid of [{ latitude: 91, longitude: 0 }, { latitude: 0, longitude: -181 }, { latitude: '1', longitude: 1 }, { latitude: NaN, longitude: 1 }, { latitude: 1, longitude: Infinity }]) assert.throws(() => validateLocation(invalid));
+});
+
+test('pedido dispensa aceite do aviso, não inventa consentimento e aceita clientes antigos', () => {
+  const customer = { ...valid.customer }; delete customer.privacy;
+  assert.equal(Object.hasOwn(validateOrder({ ...valid, customer }).customer, 'privacy'), false);
+  assert.equal(validateOrder({ ...valid, customer: { ...customer, privacy: true } }).customer.privacy, true);
+  assert.equal(validateOrder({ ...valid, customer: { ...customer, privacy: false } }).customer.privacy, false);
 });
