@@ -2,9 +2,33 @@ import { SHOP, describe, drinks, money, formatAddress, locationUrl, type Cart, t
 
 const updates = {
   accepted: 'confirmado.',
-  preparing: 'está em preparo.',
-  dispatched: 'saiu para entrega.',
-  completed: 'concluído. Obrigado pela preferência!',
+  preparing: `🥞 *PRAZERES DA MASSA | Pedido em Preparação* 👨‍🍳
+
+✅ *Seu pedido já está sendo preparado!*
+
+⏰ *Tempo estimado de preparo: 30 a 40 minutos.*
+
+🛵 Avisaremos assim que seu pedido sair para entrega.`,
+  dispatched: `🥞 *PRAZERES DA MASSA | Pedido em Rota de Entrega*
+
+🛵 *Seu pedido saiu para entrega e está a caminho!*
+
+📲 Por favor, mantenha seu telefone disponível para facilitar o recebimento.`,
+  completed: `🥞 *PRAZERES DA MASSA | Pedido Entregue* ✅
+
+❤️ Agradecemos pela sua preferência!
+
+⭐ *Sua opinião é importante!* Conte-nos como foi sua experiência com nossos produtos.
+
+📲 *Acompanhe nossas novidades e promoções:*
+
+📸 Instagram: *@prazeresdamassachap*
+📱 Status do WhatsApp
+
+Será um prazer atender você novamente!
+
+❤️ *Prazeres da Massa*
+*Massas Artesanais*`,
 } as const;
 
 export function preparedStatusMessage(order: { id: number; customer: Customer; cart: Cart; totalCents: number }, status: OrderStatus) {
@@ -12,6 +36,10 @@ export function preparedStatusMessage(order: { id: number; customer: Customer; c
   let phone = order.customer.phone.replace(/\D/g, '');
   if (/^\d{10,11}$/.test(phone)) phone = `55${phone}`;
   if (!/^55\d{10,11}$/.test(phone)) return null;
+  if (status !== 'accepted') {
+    const text = updates[status as keyof typeof updates];
+    return { text, url: `https://wa.me/${phone}?text=${encodeURIComponent(text)}` };
+  }
   const name = order.customer.name.trim().replace(/[\r\n]+/g, ' ');
   const label = `#${String(order.id).padStart(5, '0')}`;
   const lines = [`Olá, ${name}! Seu pedido ${label} ${updates[status as keyof typeof updates]}`];
