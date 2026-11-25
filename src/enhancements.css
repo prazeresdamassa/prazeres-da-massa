@@ -88,3 +88,15 @@ body,button,input,textarea,select{font-family:'Inter',Arial,Helvetica,sans-serif
 
 .pix-payment{padding:18px;background:#f5eedc;border:1px solid #e0d1ac;border-radius:10px;text-align:left;margin:18px 0}.pix-payment h4{font:600 16px/1.5 'Inter',Arial,sans-serif;margin:0 0 12px;color:#3d2b23}.pix-key-row{display:flex;align-items:center;gap:10px}.pix-key-row input[readonly]{min-width:0;flex:1;font-weight:600;font-size:18px;color:#3d2b23;letter-spacing:.5px;background:#fffdf8}.pix-key-row .outline-button{flex-shrink:0;background:white;padding:12px;font-size:14px}.pix-payment p{font-size:14px;line-height:1.6;color:#594d3c;margin:12px 0 0}.pix-copy-feedback:empty{display:none}.pix-payment .pix-copy-feedback{font-weight:600}.receipt-pix{margin:1mm 0;overflow-wrap:anywhere}
 @media(max-width:420px){.pix-key-row{flex-wrap:wrap}.pix-key-row input[readonly]{flex-basis:100%}.pix-key-row .outline-button{width:100%;justify-content:center}}
+
+/* Disponibilidade no início do cardápio: texto, ícone e cor em todas as telas. */
+.header-logo{width:64px;height:64px;object-fit:contain;border-radius:10px;flex-shrink:0}
+.store-status{max-width:1200px;display:flex;align-items:center;gap:14px;margin:0 auto 18px;padding:18px 22px;border:1px solid;border-radius:12px;color:#3f4c59;background:#f1f4f7;border-color:#cbd3db}
+.store-status-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#ffffffb3;flex-shrink:0}
+.store-status strong{display:block;font-size:20px;font-weight:700;line-height:1.4}.store-status p{margin:3px 0 0;font-size:14px;line-height:1.6}
+.store-status--open{color:#255136;background:#eaf4e9;border-color:#9cbd9e}.store-status--closed{color:#8c3025;background:#fff0eb;border-color:#d7a298}
+.modal .payment{padding:18px;margin:8px 0 22px;border:1px solid #d7c5aa;border-radius:10px;background:#f7f0e3;gap:16px 24px}
+.modal .payment legend{padding:0 6px;margin:0;font-size:19px;font-weight:700;line-height:1.5;color:#3d2b23}
+.modal .payment label{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;min-height:44px}
+@media(max-width:1252px){.store-status{margin-left:26px;margin-right:26px}}
+@media(max-width:700px){.top-strip{display:none}.site-header{padding:12px 16px;gap:12px;justify-content:space-between}.site-header .wordmark{justify-content:flex-start;gap:10px;min-width:0;flex:1;font-size:clamp(16px,4.5vw,21px)}.site-header .header-logo{width:64px;height:64px}.site-header .wordmark>span{white-space:normal;line-height:1.3}.site-header .bag-link{flex-shrink:0;padding:10px}.store-status{margin:0 16px 16px;padding:15px;gap:12px}.store-status strong{font-size:18px}.store-status p{font-size:14px}.store-status-icon{width:40px;height:40px}.modal .payment legend{font-size:18px}}

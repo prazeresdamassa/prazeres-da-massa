@@ -156,3 +156,13 @@ test('recibo preserva Pix em nova tentativa e API salva e reabre dias e período
   }
   assert.equal((await call('/api/admin/management?period=2026-11-15_2026-11-10','GET',undefined,headers)).status,400);db.sqlite.close();
 });
+
+test('API conclui pedido sem caixa de leitura do aviso e não registra consentimento presumido', async () => {
+  const {call,db}=setup();const customer={...payload.customer};delete customer.privacy;
+  const key=crypto.randomUUID();const input={...payload,customer};
+  const response=await call('/api/orders','POST',input,{'Idempotency-Key':key});assert.equal(response.status,201);
+  const row=db.sqlite.prepare('SELECT customer_json FROM orders').get() as {customer_json:string};
+  assert.equal(Object.hasOwn(JSON.parse(row.customer_json),'privacy'),false);
+  assert.equal((await call('/api/orders','POST',input,{'Idempotency-Key':key})).status,200);
+  db.sqlite.close();
+});

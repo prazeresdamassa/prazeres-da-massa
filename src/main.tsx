@@ -7,6 +7,7 @@ import './enhancements.css';
 import { PrintReceipt } from './PrintReceipt';
 import { DeliveryMap } from './DeliveryMap';
 import { OrderSuccess } from './OrderSuccess';
+import { StoreStatus } from './StoreStatus';
 import { readNewOrders, includeNewOrders } from '../shared/order-refresh';
 import { preparedStatusMessage } from '../shared/customer-messages';
 import { preparedCourierMessage, COURIER_PHONE_LABEL } from '../shared/courier-message';
@@ -73,7 +74,7 @@ function App() {
   const [info, setInfo] = useState<'hours' | 'privacy' | null>(null);
   const [checkout, setCheckout] = useState(false); const [receipt, setReceipt] = useState<Receipt | null>(null); const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ open: boolean; today: string; ready?: boolean } | null>(null); const [statusError, setStatusError] = useState(false);
-  const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', number: '', neighborhood: '', reference: '', notes: '', payment: 'pix', privacy: false });
+  const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '', number: '', neighborhood: '', reference: '', notes: '', payment: 'pix' });
   const attempt = useRef<{ signature: string; key: string } | null>(null);
   const sending = useRef(false);
   const total = totals(cart);
@@ -128,7 +129,7 @@ function App() {
       try { localStorage.setItem(ATTEMPT_KEY, JSON.stringify(attempt.current)); } catch { /* ref ainda protege esta aba */ }
       const result = await request<Receipt>('/api/orders', { method: 'POST', headers: { 'Idempotency-Key': attempt.current!.key }, body: raw });
       setReceipt(result); setCheckout(false); setCart(emptyCart()); setMapLocationRequired(false);
-      setCustomer({ name: '', phone: '', address: '', number: '', neighborhood: '', reference: '', notes: '', payment: 'pix', privacy: false });
+      setCustomer({ name: '', phone: '', address: '', number: '', neighborhood: '', reference: '', notes: '', payment: 'pix' });
       attempt.current = null; try { localStorage.removeItem(ATTEMPT_KEY); } catch { /* opcional */ }
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível registrar o pedido. Tente novamente.'); }
     finally { setBusy(false); sending.current = false; }
@@ -136,20 +137,21 @@ function App() {
   return <>
     <a className="skip" href="#categorias" onClick={() => setCategory('panquecas')}>Ir para o cardápio</a>
     <div className="top-strip"><span><MapPin size={13}/> Chapadinha, MA</span><span>Da nossa cozinha, com carinho <Heart size={12}/></span></div>
-    <header className="site-header"><a href="/" className="wordmark"><span className="brand-icon"><ChefHat size={26}/></span><span>Prazeres <i>da Massa</i></span></a>
+    <header className="site-header"><a href="/" className="wordmark"><img className="header-logo" src="/logo-nova.png" alt="Logo Prazeres da Massa" width="72" height="72"/><span>Prazeres <i>da Massa</i></span></a>
       <nav aria-label="Navegação principal"><a href="#categorias" onClick={() => setCategory('panquecas')}>Cardápio</a><button onClick={() => setInfo('hours')}>Horários</button><a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">Fale com a gente <MessageCircle size={15}/></a></nav>
       <a className="bag-link" href="#pedido" aria-label={`Seu pedido, ${units} itens`}><ShoppingBag size={19}/><span>{units}</span></a>
     </header>
     <main>
+      <StoreStatus open={status?.open} error={statusError}/>
       <section className="hero">
-        <div className="hero-copy"><div className="eyebrow"><span/> Massas Artesanais</div><h1>Seu sabor.<br/>Suas escolhas.<br/><em>Seu pedido.</em></h1>
+        <div className="hero-copy"><div className="eyebrow"><span/> Massas Artesanais</div><h1>Seu sabor.<br/>Suas escolhas. <br/><em>Seu pedido.</em></h1>
           <p>Na Prazeres da Massa, o pedido tem o seu toque. Explore o cardápio, escolha sua massa preferida e combine recheios, molhos e adicionais para criar uma combinação do seu jeito.</p>
           <a href="#categorias" onClick={() => setCategory('panquecas')} className="primary hero-cta">Monte seu pedido! <ArrowRight size={18}/></a>
           <div className="hero-foot"><span><Truck size={17}/> Entrega grátis*</span><span><Heart size={16}/> Feita com carinho</span></div>
         </div>
         <div className="hero-art"><img src="/logo-nova.png" alt="Prazeres da Massa — Massas Artesanais" fetchPriority="high" width="1254" height="1254"/></div>
       </section>
-      <div className="service-bar"><div className={`opening ${status?.open ? 'is-open' : ''}`}><span className="status-dot"/><strong>{statusError ? 'Horário indisponível' : !status ? 'Consultando horário…' : status.open ? 'Estamos abertos' : 'Fechado agora'}</strong><span className="today">{status?.today}</span></div><button onClick={() => setInfo('hours')}>Ver horários <ChevronRight size={15}/></button><div className="service-delivery"><Truck size={18}/><span>Entrega grátis em Chapadinha*</span></div></div>
+      <div className="service-bar"><button onClick={() => setInfo('hours')}>Ver horários <ChevronRight size={15}/></button><div className="service-delivery"><Truck size={18}/><span>Entrega grátis em Chapadinha*</span></div></div>
       <div className="menu-layout">
         <div className="menu-main">
           <nav className="category-menu" aria-label="Categorias do cardápio" id="categorias" tabIndex={-1}>{(['panquecas', 'massas', 'bebidas'] as const).map(id => <button key={id} type="button" aria-pressed={category === id} aria-controls={`categoria-${id}`} className={category === id ? 'active' : ''} onClick={() => setCategory(id)}>{id === 'panquecas' ? 'Panquecas' : id === 'massas' ? 'Massas' : 'Bebidas'}</button>)}</nav>
@@ -169,7 +171,7 @@ function App() {
           {!units ? <div className="empty-cart"><span><ShoppingBag size={34} strokeWidth={1.2}/></span><strong>Que tal começar com uma panqueca?</strong><p>Monte sua combinação favorita e adicione ao pedido.</p><a href="#categorias" onClick={() => setCategory('panquecas')}>Explorar o cardápio <ArrowDown size={14}/></a></div> : <div className="cart-items">{cart.pancakes.map((p, i) => <div className="cart-item" key={`${i}-${p.filling}-${p.dough}`}><div className="item-number">{p.qty}×</div><div className="cart-item-copy"><strong>{describe(p).name}</strong><p>{describe(p).details}</p><div className="item-controls"><Counter value={p.qty} min={1} max={99 - total.count + p.qty} label={`quantidade de ${describe(p).name}, ${describe(p).details}`} onChange={qty => setCart(c => ({ ...c, pancakes: c.pancakes.map((p, j) => j === i ? { ...p, qty } : p) }))}/><button className="remove" aria-label={`Remover ${describe(p).name}, ${describe(p).details}`} onClick={() => setCart(c => ({ ...c, pancakes: c.pancakes.filter((_, j) => j !== i) }))}><Trash2 size={15}/></button></div></div></div>)}{drinks.filter(d => cart.drinks[d.id]).map(d => <div className="cart-drink" key={d.id}><span>{d.name}</span><strong>{money(cart.drinks[d.id] * d.cents)}</strong><Counter value={cart.drinks[d.id]} label={`quantidade de ${d.name} no carrinho`} onChange={n => setCart(c => ({ ...c, drinks: { ...c.drinks, [d.id]: n } }))}/><button type="button" className="remove" aria-label={`Remover ${d.name} do carrinho`} onClick={() => setCart(c => { const remaining = { ...c.drinks }; delete remaining[d.id]; return { ...c, drinks: remaining }; })}><Trash2 size={18}/></button></div>)}</div>}
           <div className="cart-promo"><span>🥞</span><div><strong>Melhor em dupla</strong><p>2 panquecas por <b>R$ 21,99</b></p></div><span className="promo-tag">PROMO</span></div>
           <div className="cart-totals"><div><span>Panquecas</span><span>{money(total.pancakeCents)}</span></div>{total.drinkCents > 0 && <div><span>Bebidas</span><span>{money(total.drinkCents)}</span></div>}<div><span>Entrega*</span><span className="green">Grátis</span></div>{total.savings > 0 && <div className="savings"><CheckCircle2 size={14}/><span>Você economizou {money(total.savings)}</span></div>}<div className="grand-total"><strong>Total</strong><strong aria-live="polite">{money(total.totalCents)}</strong></div></div>
-          <button className="primary checkout-button" disabled={!total.count || !status?.open} onClick={() => { setError(''); setCheckout(true); }}> {status?.open ? 'Finalizar Pedido' : statusError ? 'Horário indisponível' : !status ? 'Consultando horário…' : 'Pedidos pausados'} <ArrowRight size={18}/></button>
+          <button className="primary checkout-button" disabled={!total.count || !status?.open} onClick={() => { setError(''); setCheckout(true); }}> {status?.open ? 'Finalizar Pedido' : statusError ? 'Atendimento indisponível' : !status ? 'Consultando atendimento…' : 'Pedidos pausados'} <ArrowRight size={18}/></button>
           <p className="cart-disclaimer"><LockKeyhole size={12}/> Seus dados são enviados com segurança.</p><p className="coverage">*Entrega grátis em Chapadinha–MA, conforme área de atendimento. A loja confirma a disponibilidade.</p>
         </aside>
       </div>
@@ -186,9 +188,8 @@ function App() {
       <div className="form-grid"><label>Rua / Avenida<input required minLength={2} maxLength={200} autoComplete="address-line1" placeholder="Nome da rua ou avenida" value={customer.address} onChange={e => setCustomer(c => ({ ...c, address: e.target.value }))}/></label><label>Número<input required maxLength={20} placeholder="Ex.: 123 ou S/N" value={customer.number ?? ''} onChange={e => setCustomer(c => ({ ...c, number: e.target.value }))}/></label></div>
       <div className="form-grid"><label>Bairro<input required minLength={2} maxLength={80} autoComplete="address-level3" value={customer.neighborhood} onChange={e => setCustomer(c => ({ ...c, neighborhood: e.target.value }))}/></label><label>Referência <span className="optional">(opcional)</span><input maxLength={200} value={customer.reference} onChange={e => setCustomer(c => ({ ...c, reference: e.target.value }))}/></label></div>
       {<DeliveryMap onSelectionChange={setMapLocationRequired} value={customer.location} onChange={point => setCustomer(c => { const next = { ...c }; if (point) next.location = point; else delete next.location; return next; })}/>}
-      <fieldset className="payment"><legend>Como prefere pagar?</legend><label><input type="radio" name="payment" checked={customer.payment === 'pix'} onChange={() => setCustomer(c => ({ ...c, payment: 'pix' }))}/> Pix</label><label><input type="radio" name="payment" checked={customer.payment === 'card'} onChange={() => setCustomer(c => ({ ...c, payment: 'card' }))}/> Cartão por aproximação</label></fieldset>
+      <fieldset className="payment"><legend>Escolha a forma de pagamento</legend><label><input type="radio" name="payment" checked={customer.payment === 'pix'} onChange={() => setCustomer(c => ({ ...c, payment: 'pix' }))}/> Pix</label><label><input type="radio" name="payment" checked={customer.payment === 'card'} onChange={() => setCustomer(c => ({ ...c, payment: 'card' }))}/> Cartão por aproximação</label></fieldset>
       <label>Alguma observação? <span className="optional">(opcional)</span><textarea maxLength={500} rows={2} placeholder="Preferências de preparo ou instruções para entrega" value={customer.notes} onChange={e => setCustomer(c => ({ ...c, notes: e.target.value }))}/></label>
-      <label className="privacy-consent"><input type="checkbox" required checked={customer.privacy} onChange={e => setCustomer(c => ({ ...c, privacy: e.target.checked }))}/><span>Li o aviso abaixo e estou ciente do uso dos meus dados para atender e entregar este pedido.</span></label>
       <details className="privacy-details"><summary>Aviso de privacidade</summary><Privacy/></details>
       {error && <p className="error" role="alert">{error}</p>}
       <button className="primary full" disabled={busy} type="submit">{busy ? 'Registrando seu pedido…' : 'Concluir pedido'} {!busy && <ArrowRight size={17}/>}</button><p className="hint">Seu pedido será registrado no painel da loja. Aguarde a confirmação pelo WhatsApp.</p>
