@@ -36,7 +36,7 @@ export type OrderStatus = keyof typeof statusLabels;
 export type Pancake = { filling: string; dough: string; sauce: string; extras: string[]; qty: number };
 export type Cart = { pancakes: Pancake[]; drinks: Record<string, number> };
 export type DeliveryLocation = { latitude: number; longitude: number };
-export type Customer = { location?: DeliveryLocation; name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy: boolean };
+export type Customer = { location?: DeliveryLocation; name: string; phone: string; address: string; number?: string; neighborhood: string; reference: string; notes: string; payment: 'pix' | 'card'; privacy?: boolean };
 export type OrderInput = { cart: Cart; customer: Customer };
 export type Receipt = { payment: Customer['payment']; id: number; label: string; totalCents: number; status: OrderStatus; whatsappUrl: string; createdAt: string };
 export const emptyCart = (): Cart => ({ pancakes: [], drinks: {} });
@@ -100,11 +100,10 @@ export function validateOrder(value: unknown): OrderInput {
   const phone = text(c.phone, 'o WhatsApp', 10, 22).replace(/\D/g, '');
   if (!/^\d{10,11}$/.test(phone)) throw new ValidationError('Informe seu WhatsApp com DDD (10 ou 11 dígitos).');
   if (c.payment !== 'pix' && c.payment !== 'card') throw new ValidationError('Escolha a forma de pagamento.');
-  if (c.privacy !== true) throw new ValidationError('Confirme a leitura do aviso de privacidade.');
   return { cart, customer: { ...(c.location != null ? { location: validateLocation(c.location) } : {}), name: text(c.name, 'o nome', 2, 80), phone,
     address: text(c.address, 'a rua', 2, 200), number: text(c.number, 'o número', 1, 20), neighborhood: text(c.neighborhood, 'o bairro', 2, 80),
     reference: text(c.reference, 'a referência', 0, 200), notes: text(c.notes, 'as observações', 0, 500),
-    payment: c.payment, privacy: true } };
+    payment: c.payment, ...(typeof c.privacy === 'boolean' ? { privacy: c.privacy } : {}) } };
 }
 export function totals(cart: Cart) {
   const count = cart.pancakes.reduce((n, p) => n + p.qty, 0);
